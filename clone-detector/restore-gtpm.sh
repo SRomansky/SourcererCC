@@ -1,8 +1,9 @@
 #!/bin/bash
 #
 #
-scriptPATH=`realpath $0`
-rootPATH=`dirname $scriptPATH`
+#scriptPATH=`realpath $0`
+#rootPATH=`dirname $scriptPATH`
+rootPATH=`pwd`
 echo "restoring gtpm indexes..."
 if [ -d "$rootPATH/gtpmindex" ]; then
    rm -rf $rootPATH/gtpmindex

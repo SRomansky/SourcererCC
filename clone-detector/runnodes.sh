@@ -1,7 +1,8 @@
 #!/bin/bash
 # run this script on master
-scriptPATH=`realpath $0`
-rootPATH=`dirname $scriptPATH`
+#scriptPATH=`realpath $0`
+#rootPATH=`dirname $scriptPATH`
+rootPATH=`pwd`
 echo $rootPATH
 ant -buildfile $rootPATH/build.xml clean cdi
 mode="${1:-search}"
@@ -17,7 +18,7 @@ PIDS=""
 
 for i in $(seq 1 1 $num_nodes)
 do
-    java -Dproperties.rootDir="$rootPATH/" -Dproperties.location="$rootPATH/NODE_$i/sourcerer-cc.properties" -Dlog4j.configurationFile="$rootPATH/NODE_$i/log4j2.xml" -Xms4g -Xmx4g -XX:+UseCompressedOops -jar $rootPATH/dist/indexbased.SearchManager.jar $mode $threshold &
+    java -Dproperties.rootDir="$rootPATH/" -Dproperties.location="$rootPATH/NODE_$i/sourcerer-cc.properties" -Dlog4j.configurationFile="$rootPATH/NODE_$i/log4j2.xml" -Xms8g -Xmx8g -XX:+UseCompressedOops -jar $rootPATH/dist/indexbased.SearchManager.jar $mode $threshold &
     PIDS+="$! "
 done
 echo $PIDS
