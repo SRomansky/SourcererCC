@@ -458,12 +458,30 @@ public class SearchManager {
             WordFrequencyStore wfs = new WordFrequencyStore();
             wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
+        	// TODO start a background job to register the shard with the data manager
+        	theInstance.startDaemon();
+        	
         	Spark.get("/hello", (req, res) -> "Hello World");
         	
         	Spark.post("/halt", (req, res) -> {
         		Spark.stop();
         		System.exit(0);
         		return "Stopping process.";
+        		// TODO is there a better way to shutdown Spark and the jvm?
+        	});
+        	
+        	Spark.get("/status", (req, res) -> {
+        		// TODO return a message conveying the current state of the shard.
+        		return "Status command is not implemented yet.";
+        	});
+        	
+        	Spark.post("/query", (req, res) -> {
+        		// TODO get post data
+        		// TODO save a copy of post data?
+        		// TODO daemon will send a message to manager about results?
+        		// TODO daemon will have a command to return the last results?
+        		
+        		return "Query command is not implemented yet.";
         	});
         }
         long estimatedTime = System.nanoTime() - start_time;
@@ -484,7 +502,281 @@ public class SearchManager {
         logger.info("completed on " + SearchManager.NODE_PREFIX);
     }
 
-    private void readAndUpdateRunMetadata() {
+    private void startDaemon() {
+    	/*
+    	 * Start the daemon and load the dataset into memory if it exists.
+    	 */
+    	//SearchManager.DATASET_DIR
+    	
+    	// init
+    	/* This loads information from the query dir which isn't needed at this point in time.
+    	WordFrequencyStore wfs = new WordFrequencyStore();
+        try {
+			wfs.populateLocalWordFreqMap();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
+    	
+    	// create shards (we don't want to do this anymore.)
+    	/*
+    	long begin_time = System.currentTimeMillis();
+        try {
+			theInstance.doPartitions();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        for (Shard shard : SearchManager.shards) {
+            shard.closeWriters();
+        }
+        logger.info("indexing over!");
+        theInstance.timeIndexing = System.currentTimeMillis() - begin_time;
+    	*/
+    	// here is the code from doPartitions
+    	ITokensFileProcessor datasetITokensFileProcessor = new ITokensFileProcessor() {
+            public void processLine(String line) throws ParseException {
+                if (!SearchManager.FATAL_ERROR) {
+                    Bag bag = cloneHelper.deserialise(line);
+                    if (null == bag || bag.getSize() < SearchManager.min_tokens) {
+                        if (null == bag) {
+                            logger.debug(SearchManager.NODE_PREFIX
+                                    + " empty bag. statusCounter= "
+                                    + SearchManager.statusCounter);
+                        } else {
+                            logger.debug(SearchManager.NODE_PREFIX + " ignoring bag " + ", " + bag
+                                    + ", statusCounter=" + SearchManager.statusCounter);
+                        }
+                        return;
+                    }
+                    Util.sortBag(bag);
+                    
+                    /* no more sharding the dataset here.
+                    List<Shard> shards = SearchManager.getShards(bag);
+                    String bagString = bag.serialize();
+                    for (Shard shard : shards) {
+                        Util.writeToFile(shard.candidateFileWriter, bagString, true);
+                        shard.size++;
+                    }
+                    Shard shard = SearchManager.getShardToSearch(bag);
+                    if (null != shard) {
+                        Util.writeToFile(shard.queryFileWriter, bagString, true);
+                    }
+                    */
+                    // looking into initSearchEnv() to see how the dataset is loaded
+                    if (SearchManager.NODE_PREFIX.equals("NODE_1")) {  // TODO what does this do?
+                        theInstance.readAndUpdateRunMetadata();
+                        File completedNodeFile = new File(SearchManager.completedNodes);
+                        if (completedNodeFile.exists()) {
+                            logger.debug(completedNodeFile.getAbsolutePath() + "exists, deleting it.");
+                            completedNodeFile.delete();
+                        }
+                    }
+
+                    /* no more dataset shards here.
+                    Set<Integer> searchShards = new HashSet<Integer>();
+                    String searchShardsString = properties.getProperty("SEARCH_SHARDS", "ALL");
+                    if (searchShardsString.equalsIgnoreCase("ALL")) {
+                        searchShardsString = null;
+                    }
+                    if (null != searchShardsString) {
+                        String[] searchShardsArray = searchShardsString.split(",");
+                        for (String shardId : searchShardsArray) {
+                            searchShards.add(Integer.parseInt(shardId));
+                        }
+                    }
+                    */
+                    
+                    /* TODO what does setupSearchers() do?
+                    for (Shard shard : SearchManager.shards) {
+                        if (searchShards.size() > 0) {
+                            if (searchShards.contains(shard.getId())) {
+                                theInstance.setupSearchers(shard);
+                            }
+                        } else {
+                            // search on all shards.
+                            theInstance.setupSearchers(shard);
+                        }
+                    }
+                    */
+                    
+                    // code from setupSearchers()
+                    /*
+                    theInstance.max_index_size = Integer.parseInt(properties.getProperty("MAX_INDEX_SIZE", "12"));
+                    if (shard.subShards.size() > 0) {
+                        for (Shard subShard : shard.subShards) {
+                            theInstance.setupSearchers(subShard);
+                        }
+                    } else {
+                        try {
+                            theInstance.findCandidates(shard);
+
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    */
+                    // code from findCandidates(shard)
+                    try {
+                    	// no shardFolderPath, use File datasetDir = new File(SearchManager.DATASET_DIR);
+                        String shardFolderPath = SearchManager.ROOT_DIR + "/index/" + shard.indexPath;
+                        File queryFile = new File(shardFolderPath + "/query.file");
+                        File candidateFile = new File(shardFolderPath + "/candidates.file");  // TODO output file?
+                        QueryFileProcessor queryFileProcessor = new QueryFileProcessor();
+                        logger.info("Query File: " + queryFile.getAbsolutePath());
+                        String filename = queryFile.getName().replaceFirst("[.][^.]+$", "");
+                        try {
+                        	// TODO output file.
+                            String cloneReportFileName = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR
+                                    + "/" + filename + "clones_index_WITH_FILTER.txt";
+                            File cloneReportFile = new File(cloneReportFileName);
+                            if (cloneReportFile.exists()) {
+                            	theInstance.appendToExistingFile = true;
+                            } else {
+                            	theInstance.appendToExistingFile = false;
+                            }
+                            // TODO output file writer.
+                            SearchManager.clonesWriter = Util.openFile(SearchManager.OUTPUT_DIR
+                                    + SearchManager.th / SearchManager.MUL_FACTOR + "/" + filename + "clones_index_WITH_FILTER.txt",
+                                    theInstance.appendToExistingFile);
+                            // TODO recoveryWriter
+                            SearchManager.recoveryWriter = Util.openFile(
+                                    SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR + "/recovery.txt",
+                                    false);
+                        } catch (IOException e) {
+                            logger.error(e.getMessage() + " exiting");
+                            System.exit(1);
+                        }
+                        int completedLines = 0;
+                        while (true) {
+                            logger.info("creating indexes for " + candidateFile.getAbsolutePath());
+                            completedLines = theInstance.createIndexes(candidateFile, completedLines);
+                            logger.info("indexes created");
+                            try {
+                                TokensFileReader tfr = new TokensFileReader(SearchManager.NODE_PREFIX, queryFile,
+                                        SearchManager.max_tokens, queryFileProcessor);
+                                tfr.read();
+                            } catch (IOException e) {
+                                logger.error(e.getMessage() + " skiping to next file");
+                            } catch (ParseException e) {
+                                logger.error(SearchManager.NODE_PREFIX + "parseException caught. message: " + e.getMessage());
+                                e.printStackTrace();
+                            }
+                            logger.debug("COMPLETED LINES: " + completedLines);
+                            if (completedLines == -1) {
+                                break;
+                            }                                                       
+                        }
+                        // TODO what does createIndexes do with the candidateFile? Is it like the line processor from cshard?
+                        // reads the candidateFile into the invertedIndexQueue
+                        // TODO who reads invertedIndex and documentsForII?
+                        SearchManager.invertedIndex = new ConcurrentHashMap<String, Set<Long>>();
+                        SearchManager.documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
+                        BufferedReader br = new BufferedReader(new FileReader(candidateFile));
+                        String line = "";
+                        long size = 0;
+                        long gig = 1000000000l;
+                        long maxMemory = this.max_index_size*gig;
+                        int completedLines = 0;
+                        try {
+                            // SearchManager.bagsToSortQueue = new ThreadedChannel<Bag>(
+                            // this.threadsToProcessBagsToSortQueue, BagSorter.class);
+                            SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
+                                    InvertedIndexCreator.class);
+                            while ((line = br.readLine()) != null && line.trim().length() > 0) {
+                                completedLines++;
+                                if (completedLines <= avoidLines) {
+                                    continue;
+                                }
+                                Bag bag = theInstance.cloneHelper.deserialise(line);
+                                if (null != bag) {
+                                    size = size + (bag.getNumUniqueTokens() * 300); // approximate mem utilization. 1 key value pair = 300 bytes
+                                    logger.debug("indexing "+ completedLines + " bag: "+ bag + ", mem: "+size + " bytes");
+                                    SearchManager.bagsToInvertedIndexQueue.send(bag);
+                                    if (size >= maxMemory) {
+                                        return completedLines;
+                                    }
+                                }
+                            }
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        } catch (InstantiationException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        } catch (IllegalAccessException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        } catch (IllegalArgumentException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        } catch (InvocationTargetException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        } catch (NoSuchMethodException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        } catch (SecurityException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        } finally {
+                            // SearchManager.bagsToSortQueue.shutdown();
+                            SearchManager.bagsToInvertedIndexQueue.shutdown();
+                            try {
+                                br.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        return -1;
+                        
+                    } catch (FileNotFoundException e) {
+                        logger.error(e.getMessage() + "exiting");
+                        System.exit(1);
+                    }
+                } else {
+                    logger.fatal("FATAL error detected. exiting now"); // TODO what
+                    System.exit(1); // TODO don't system.exit(). Try to recover gracefully
+                }
+            }
+        };
+    	
+    	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");
+        File datasetDir = new File(SearchManager.DATASET_DIR);
+        if (datasetDir.isDirectory()) {
+            logger.info("Reading dataset from directory: " + datasetDir.getAbsolutePath());
+            for (File inputFile : Util.getAllFilesRecur(datasetDir)) {
+                logger.info("indexing dataset file: " + inputFile.getAbsolutePath());
+                try {
+                    TokensFileReader tfr = new TokensFileReader(SearchManager.NODE_PREFIX, inputFile,
+                            SearchManager.max_tokens, datasetITokensFileProcessor);
+                    tfr.read();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    logger.error(SearchManager.NODE_PREFIX + ", something nasty, exiting. counter:"
+                            + SearchManager.statusCounter);
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            }
+        } else {
+        	// TODO update the webservice status. The datasetDir is invalid. Try picking a directory instead of a file.
+        }
+	}
+
+	private void readAndUpdateRunMetadata() {
 
         this.readRunMetadata();
         // update the runMetadata
