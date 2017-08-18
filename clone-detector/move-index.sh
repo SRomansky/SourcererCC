@@ -2,8 +2,9 @@
 #
 # Run this script after indexing with just 1 node
 #
-scriptPATH=`realpath $0`
-rootPATH=`dirname $scriptPATH`
+#scriptPATH=`realpath $0`
+#rootPATH=`dirname $scriptPATH`
+rootPATH=`pwd`
 echo "Installing indexes..."
 
 if [ -d "$rootPATH/index" ]; then

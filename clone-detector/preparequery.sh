@@ -1,7 +1,8 @@
 #!/bin/bash
 num_nodes="${1:-0}"
-scriptPATH=`realpath $0`
-rootPATH=`dirname $scriptPATH`
+#scriptPATH=`realpath $0`
+#rootPATH=`dirname $scriptPATH`
+rootPATH=`pwd`
 echo "rootpath is : $rootPATH"
 for i in $(seq 1 1 $num_nodes)
 do

@@ -1,8 +1,9 @@
 #!/bin/bash
 #
 #
-scriptPATH=`realpath $0`
-rootPATH=`dirname $scriptPATH`
+#scriptPATH=`realpath $0`
+#rootPATH=`dirname $scriptPATH`
+rootPATH=`pwd`
 echo "backing up gtpm indexes..."
 rm -rf $rootPATH/backup_gtpm
 mkdir $rootPATH/backup_gtpm

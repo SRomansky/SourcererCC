@@ -454,7 +454,7 @@ public class SearchManager {
             }
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_INIT)) {
             WordFrequencyStore wfs = new WordFrequencyStore();
-            wfs.populateLocalWordFreqMap();
+            wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
         }
         long estimatedTime = System.nanoTime() - start_time;
         logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
