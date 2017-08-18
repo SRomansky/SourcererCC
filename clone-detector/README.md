@@ -1,5 +1,7 @@
 # Very Basic Draft
 
+to get it running, install gradle, then run `gradle jarCDI2`.
+
 # Create Index Configuration
 file: sourcerer-cc.properties
   set  following:

@@ -133,6 +133,7 @@ public class SearchManager {
     public static long QUERY_LINES_TO_IGNORE = 0;
     public static String ROOT_DIR;
     private static final Logger logger = LogManager.getLogger(SearchManager.class);
+	private static final String ACTION_DAEMON = "daemon";
     public static boolean FATAL_ERROR;
     public static List<String> METRICS_ORDER_IN_SHARDS;
     public static Map<String, Set<Long>> invertedIndex;
@@ -455,6 +456,8 @@ public class SearchManager {
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_INIT)) {
             WordFrequencyStore wfs = new WordFrequencyStore();
             wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
+        } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
+        	get("/hello", (req, res) -> "Hello World");
         }
         long estimatedTime = System.nanoTime() - start_time;
         logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
