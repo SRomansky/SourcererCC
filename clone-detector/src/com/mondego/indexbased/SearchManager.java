@@ -480,6 +480,7 @@ public class SearchManager {
         		// TODO save a copy of post data?
         		// TODO daemon will send a message to manager about results?
         		// TODO daemon will have a command to return the last results?
+        		theInstance.queryDaemon();
         		
         		return "Query command is not implemented yet.";
         	});
@@ -506,6 +507,9 @@ public class SearchManager {
     	/*
     	 * Start the daemon and load the dataset into memory if it exists.
     	 */
+    	
+    	// TODO if the daemon is restarted, or the dataset needs to be reloaded, the invertedIndex and documentsForII need to be cleared.
+    	
     	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
         File datasetDir = new File(SearchManager.DATASET_DIR);
         if (datasetDir.isDirectory()) {
@@ -541,6 +545,88 @@ public class SearchManager {
             System.exit(1);
         }
 	}
+    
+    private void queryDaemon() {
+    	// TODO prevent multiple queries at the same time?
+    	// start queue processors
+    	this.completedQueries = new HashSet<Long>();
+
+        this.createShards(false);
+
+        logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
+                + System.lineSeparator() + " QLQ_THREADS: " + this.qlq_thread_count + " QBQ_THREADS: "
+                + this.qbq_thread_count + " QCQ_THREADS: " + this.qcq_thread_count + " VCQ_THREADS: "
+                + this.vcq_thread_count + " RCQ_THREADS: " + this.rcq_thread_count + System.lineSeparator());
+        SearchManager.queryLineQueue = new ThreadedChannel<String>(this.qlq_thread_count, QueryLineProcessor.class);
+        SearchManager.queryBlockQueue = new ThreadedChannel<QueryBlock>(this.qbq_thread_count,
+                CandidateSearcher.class);
+        SearchManager.queryCandidatesQueue = new ThreadedChannel<QueryCandidates>(this.qcq_thread_count,
+                CandidateProcessor.class);
+        SearchManager.verifyCandidateQueue = new ThreadedChannel<CandidatePair>(this.vcq_thread_count,
+                CloneValidator.class);
+        SearchManager.reportCloneQueue = new ThreadedChannel<ClonePair>(this.rcq_thread_count, CloneReporter.class);
+        logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
+                + System.lineSeparator() + " BQ_THREADS: " + this.threadsToProcessBagsToSortQueue
+                + System.lineSeparator() + " SBQ_THREADS: " + this.threadToProcessIIQueue + System.lineSeparator()
+                + " IIQ_THREADS: " + this.threadsToProcessFIQueue + System.lineSeparator());
+    	
+    	
+		File datasetDir = new File(SearchManager.QUERY_DIR_PATH);
+        if (datasetDir.isDirectory()) {
+            logger.info("QuerySet directory: " + datasetDir.getAbsolutePath());
+            for (File inputFile : Util.getAllFilesRecur(datasetDir)) {
+                logger.info("indexing QuerySet file: " + inputFile.getAbsolutePath());
+                try {
+                	File queryFile = inputFile;
+                    QueryFileProcessor queryFileProcessor = new QueryFileProcessor();
+                    logger.info("Query File: " + queryFile.getAbsolutePath());
+                    String filename = queryFile.getName().replaceFirst("[.][^.]+$", "");
+                    try {
+                    	// TODO figure out how these will be reported from the web service
+                        String cloneReportFileName = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR
+                                + "/" + filename + "clones_index_WITH_FILTER.txt";
+                        File cloneReportFile = new File(cloneReportFileName);
+                        if (cloneReportFile.exists()) {
+                            this.appendToExistingFile = true;
+                        } else {
+                            this.appendToExistingFile = false;
+                        }
+                        SearchManager.clonesWriter = Util.openFile(SearchManager.OUTPUT_DIR
+                                + SearchManager.th / SearchManager.MUL_FACTOR + "/" + filename + "clones_index_WITH_FILTER.txt",
+                                this.appendToExistingFile);
+                        // recoveryWriter
+                        SearchManager.recoveryWriter = Util.openFile(
+                                SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR + "/recovery.txt",
+                                false);
+                    } catch (IOException e) {
+                        logger.error(e.getMessage() + " exiting");
+                        System.exit(1);
+                    }
+                    
+                    // TODO does this code need the while loop?
+        			try {
+        				TokensFileReader tfr = new TokensFileReader(SearchManager.NODE_PREFIX, queryFile,
+        						SearchManager.max_tokens, queryFileProcessor);
+        				tfr.read();
+        			} catch (IOException e) {
+        				logger.error(e.getMessage() + " skiping to next file");
+        			} catch (ParseException e) {
+        				logger.error(SearchManager.NODE_PREFIX + "parseException caught. message: " + e.getMessage());
+        				e.printStackTrace();
+        			}
+        			
+                } catch (Exception e) {
+                    logger.error(SearchManager.NODE_PREFIX + ", something nasty, exiting. counter:"
+                            + SearchManager.statusCounter);
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            }
+        } else {
+            logger.error("File: " + datasetDir.getName() + " is not a directory. Exiting now");
+            System.exit(1);
+        }
+	}
 
 	private void readAndUpdateRunMetadata() {
 
@@ -549,6 +635,8 @@ public class SearchManager {
         SearchManager.RUN_COUNT += 1;
         this.updateRunMetadata(SearchManager.RUN_COUNT + "");
     }
+	
+	
 
     private void readRunMetadata() {
         File f = new File(Util.RUN_METADATA);
