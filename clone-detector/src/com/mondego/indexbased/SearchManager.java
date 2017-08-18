@@ -54,6 +54,7 @@ import com.mondego.utility.Util;
 import com.mondego.validation.TestGson;
 
 import net.jmatrix.eproperties.EProperties;
+import spark.Spark;
 
 import static spark.Spark.*;
 
@@ -457,7 +458,13 @@ public class SearchManager {
             WordFrequencyStore wfs = new WordFrequencyStore();
             wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
-        	get("/hello", (req, res) -> "Hello World");
+        	Spark.get("/hello", (req, res) -> "Hello World");
+        	
+        	Spark.post("/halt", (req, res) -> {
+        		Spark.stop();
+        		System.exit(0);
+        		return "Stopping process.";
+        	});
         }
         long estimatedTime = System.nanoTime() - start_time;
         logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
