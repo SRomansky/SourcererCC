@@ -590,7 +590,7 @@ public class SearchManager {
 						logger.debug("indexing " + completedLines + " bag: " + bag + ", mem: " + size + " bytes");
 						SearchManager.bagsToInvertedIndexQueue.send(bag);
 						if (size >= maxMemory) {
-							return completedLines;
+							//return completedLines;
 						}
 					}
 				}
@@ -628,40 +628,8 @@ public class SearchManager {
 
 		} catch (FileNotFoundException e) {
 			logger.error(e.getMessage() + "exiting");
-			System.exit(1);
+			System.exit(1);// TODO don't system.exit(). Try to recover gracefully
 		}
-	}else {
-		logger.fatal("FATAL error detected. exiting now"); // TODO what
-		System.exit(1); // TODO don't system.exit(). Try to recover gracefully
-	}}
-    	/* this code from doPartitions loads the dataset and places it into the shard directories. But, I didn't see it load the dataset for the purpose of searching for clones.
-    	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");
-        File datasetDir = new File(SearchManager.DATASET_DIR);
-        if (datasetDir.isDirectory()) {
-            logger.info("Reading dataset from directory: " + datasetDir.getAbsolutePath());
-            for (File inputFile : Util.getAllFilesRecur(datasetDir)) {
-                logger.info("indexing dataset file: " + inputFile.getAbsolutePath());
-                try {
-                    TokensFileReader tfr = new TokensFileReader(SearchManager.NODE_PREFIX, inputFile,
-                            SearchManager.max_tokens, datasetITokensFileProcessor);
-                    tfr.read();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    logger.error(SearchManager.NODE_PREFIX + ", something nasty, exiting. counter:"
-                            + SearchManager.statusCounter);
-                    e.printStackTrace();
-                    System.exit(1);
-                }
-            }
-        } else {
-        	// TODO update the webservice status. The datasetDir is invalid. Try picking a directory instead of a file.
-        }
-        */
 	}
 
 	private void readAndUpdateRunMetadata() {
