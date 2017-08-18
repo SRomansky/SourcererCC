@@ -3,7 +3,7 @@
 scriptPATH=`realpath $0`
 rootPATH=`dirname $scriptPATH`
 echo $rootPATH
-ant -buildfile $rootPATH/build.xml clean cdi
+#ant -buildfile $rootPATH/build.xml clean cdi
 mode="${1:-search}"
 num_nodes="${2:-50}"
 threshold="${3:-8}"

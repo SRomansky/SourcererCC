@@ -1,0 +1,74 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+ant.importBuild 'build.xml'
+
+def cdIndex      = "indexbased.SearchManager"
+
+def buildDir     = "build"
+def classesDir      = "${buildDir}/classes"
+def jarDir        = "dist"
+
+def srcDir        = "src/com/mondego"
+
+configurations {
+  sparkDeps {
+    extendsFrom compile
+  }
+}
+
+task compile2(type: JavaCompile, dependsOn: 'copyToLib') {
+     mkdir(buildDir)
+     mkdir(jarDir)
+
+     source = fileTree(dir: srcDir, include: '*/*.java')
+     destinationDir = file(classesDir)
+     sourceCompatibility = '1.8'
+     targetCompatibility = '1.8'
+     classpath = fileTree(dir: 'lib', include: ['*.jar'])
+     dependsOn configurations.sparkDeps
+}
+
+task jarCDI2(dependsOn: 'compile2', type: Jar) {
+     mkdir(jarDir)
+    
+     manifest {
+        attributes 'Main-Class': "com.mondego.${cdIndex}"
+     }
+     baseName = cdIndex
+     destinationDir = file(jarDir)
+     from(files(classesDir))  // put the compiled classes into the jar
+     // now, put the classes from the dependencies into the jar
+     from { compile2.classpath.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/com/mondego']
+        }
+    }
+}
+
+// these are the dependencies for the jar file
+dependencies {
+  compile fileTree(dir: 'lib', include: ['*.jar', '*/*.jar'])
+}
+
+// we need dependencies at build time
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath group: "com.sparkjava", name: "spark-core", version: "2.6.0"
+  }
+}
+
+// grab new jar files from the dependencies and put them into lib folder
+task copyToLib(type: Copy) {
+  from buildscript.configurations.classpath
+  into "lib"
+}

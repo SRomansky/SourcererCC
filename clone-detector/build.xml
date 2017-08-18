@@ -20,7 +20,7 @@
     
     <property name="dist.dir" value="dist"/>
 
-    <target name="clean">
+    <target name="clean-up">
         <delete dir="${build.dir}"/>
         <delete dir="${jar.dir}"/>
     </target>
@@ -134,14 +134,14 @@
 	        </target>
 	
 <!--     <target name="clean-build" depends="clean,jar"/> -->
-    <target name="cdwf" depends="clean,runWF"/>
-    <target name="cdwof" depends="clean,runWOF"/>
-    <target name="cdboth" depends="clean,jarWF,jarWOF"/>
+    <target name="cdwf" depends="clean-up,runWF"/>
+    <target name="cdwof" depends="clean-up,runWOF"/>
+    <target name="cdboth" depends="clean-up,jarWF,jarWOF"/>
     <target name="cdpp" depends="jarBA,jarNA"/>
     <target name="cdv" depends="jarV"/>
     <target name="cda" depends="jarAg"/>
     <target name="cdi" depends="jarCDI"/>
 	<target name="cdini" depends="cdboth, cdi"/>
-	<target name="ppm" depends="clean, jarCM, jarFix"/>
+	<target name="ppm" depends="clean-up, jarCM, jarFix"/>
 	<target name="cdmerge" depends="jarMerge"/>
 </project>

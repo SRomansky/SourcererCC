@@ -55,6 +55,8 @@ import com.mondego.validation.TestGson;
 
 import net.jmatrix.eproperties.EProperties;
 
+import static spark.Spark.*;
+
 /**
  * @author vaibhavsaini
  * 
