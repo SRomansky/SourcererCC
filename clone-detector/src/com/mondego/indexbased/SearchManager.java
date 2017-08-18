@@ -137,9 +137,9 @@ public class SearchManager {
 	private static final String ACTION_DAEMON = "daemon";
     public static boolean FATAL_ERROR;
     public static List<String> METRICS_ORDER_IN_SHARDS;
-    public static Map<String, Set<Long>> invertedIndex;
+    public static Map<String, Set<Long>> invertedIndex = new ConcurrentHashMap<String, Set<Long>>();
     private static int docId;
-    public static Map<Long, DocumentForInvertedIndex> documentsForII;
+    public static Map<Long, DocumentForInvertedIndex> documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
 
     public SearchManager(String[] args) throws IOException {
         SearchManager.clonePairsCount = 0;
@@ -506,130 +506,40 @@ public class SearchManager {
     	/*
     	 * Start the daemon and load the dataset into memory if it exists.
     	 */
-    	//SearchManager.DATASET_DIR
-    	
-    	// init, cshards, some of search
-    	// code from findCandidates(shard)
-		try {
-			// no shardFolderPath, use File datasetDir = new
-			// File(SearchManager.DATASET_DIR);
-			String shardFolderPath = SearchManager.ROOT_DIR + "/index/" + shard.indexPath;
-			File queryFile = new File(shardFolderPath + "/query.file");
-			File candidateFile = new File(shardFolderPath + "/candidates.file"); // TODO output file?
-			QueryFileProcessor queryFileProcessor = new QueryFileProcessor();
-			logger.info("Query File: " + queryFile.getAbsolutePath());
-			String filename = queryFile.getName().replaceFirst("[.][^.]+$", "");
-			try {
-				// TODO output file.
-				String cloneReportFileName = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR
-						+ "/" + filename + "clones_index_WITH_FILTER.txt";
-				File cloneReportFile = new File(cloneReportFileName);
-				if (cloneReportFile.exists()) {
-					theInstance.appendToExistingFile = true;
-				} else {
-					theInstance.appendToExistingFile = false;
-				}
-				// TODO output file writer.
-				SearchManager.clonesWriter = Util.openFile(SearchManager.OUTPUT_DIR
-						+ SearchManager.th / SearchManager.MUL_FACTOR + "/" + filename + "clones_index_WITH_FILTER.txt",
-						theInstance.appendToExistingFile);
-				// TODO recoveryWriter
-				SearchManager.recoveryWriter = Util.openFile(
-						SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR + "/recovery.txt",
-						false);
-			} catch (IOException e) {
-				logger.error(e.getMessage() + " exiting");
-				System.exit(1);
-			}
-			int completedLines = 0;
-			while (true) {
-				logger.info("creating indexes for " + candidateFile.getAbsolutePath());
-				completedLines = theInstance.createIndexes(candidateFile, completedLines);
-				logger.info("indexes created");
-				try {
-					TokensFileReader tfr = new TokensFileReader(SearchManager.NODE_PREFIX, queryFile,
-							SearchManager.max_tokens, queryFileProcessor);
-					tfr.read();
-				} catch (IOException e) {
-					logger.error(e.getMessage() + " skiping to next file");
-				} catch (ParseException e) {
-					logger.error(SearchManager.NODE_PREFIX + "parseException caught. message: " + e.getMessage());
-					e.printStackTrace();
-				}
-				logger.debug("COMPLETED LINES: " + completedLines);
-				if (completedLines == -1) {
-					break;
-				}
-			}
-			// TODO what does createIndexes do with the candidateFile? Is it like the line
-			// processor from cshard?
-			// reads the candidateFile into the invertedIndexQueue
-			// TODO who reads invertedIndex and documentsForII?
-			SearchManager.invertedIndex = new ConcurrentHashMap<String, Set<Long>>();
-			SearchManager.documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
-			BufferedReader br = new BufferedReader(new FileReader(candidateFile));
-			String line = "";
-			long size = 0;
-			long gig = 1000000000l;
-			long maxMemory = this.max_index_size * gig;
-			int completedLines = 0;
-			try {
-				// SearchManager.bagsToSortQueue = new ThreadedChannel<Bag>(
-				// this.threadsToProcessBagsToSortQueue, BagSorter.class);
-				SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
-						InvertedIndexCreator.class);
-				while ((line = br.readLine()) != null && line.trim().length() > 0) {
-					completedLines++;
-					if (completedLines <= avoidLines) {
-						continue;
-					}
-					Bag bag = theInstance.cloneHelper.deserialise(line);
-					if (null != bag) {
-						size = size + (bag.getNumUniqueTokens() * 300); // approximate mem utilization. 1 key value pair
-																		// = 300 bytes
-						logger.debug("indexing " + completedLines + " bag: " + bag + ", mem: " + size + " bytes");
-						SearchManager.bagsToInvertedIndexQueue.send(bag);
-						if (size >= maxMemory) {
-							//return completedLines;
-						}
-					}
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InstantiationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} finally {
-				// SearchManager.bagsToSortQueue.shutdown();
-				SearchManager.bagsToInvertedIndexQueue.shutdown();
-				try {
-					br.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		// return -1;
-
-		} catch (FileNotFoundException e) {
-			logger.error(e.getMessage() + "exiting");
-			System.exit(1);// TODO don't system.exit(). Try to recover gracefully
-		}
+    	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
+        File datasetDir = new File(SearchManager.DATASET_DIR);
+        if (datasetDir.isDirectory()) {
+            logger.info("Dataset directory: " + datasetDir.getAbsolutePath());
+            for (File inputFile : Util.getAllFilesRecur(datasetDir)) {
+                logger.info("indexing dataset file: " + inputFile.getAbsolutePath());
+                try {
+                	File candidateFile = inputFile;
+        			
+        			int completedLines = 0;
+        			while (true) {
+        				// SearchManager() spawns threads to process the index information from the query files.
+        				// TODO look at the processes spawned in SearchManager
+        				logger.info("creating indexes for " + candidateFile.getAbsolutePath());
+        				completedLines = theInstance.createIndexes(candidateFile, completedLines);  // sends read Dataset to invertedIndex, documentsForII. Cuts up some of the bags if they are on memory boundaries. I haven't read how the memory boundary works.
+        				logger.info("indexes created");
+        				logger.debug("COMPLETED LINES: " + completedLines);
+        				if (completedLines == -1) {
+        					break;
+        				}
+        			}
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    logger.error(SearchManager.NODE_PREFIX + ", something nasty, exiting. counter:"
+                            + SearchManager.statusCounter);
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            }
+        } else {
+            logger.error("File: " + datasetDir.getName() + " is not a directory. Exiting now");
+            System.exit(1);
+        }
 	}
 
 	private void readAndUpdateRunMetadata() {
@@ -979,8 +889,8 @@ public class SearchManager {
     }
 
     private int createIndexes(File candidateFile, int avoidLines) throws FileNotFoundException {
-        SearchManager.invertedIndex = new ConcurrentHashMap<String, Set<Long>>();
-        SearchManager.documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
+        //SearchManager.invertedIndex = new ConcurrentHashMap<String, Set<Long>>();
+        //SearchManager.documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
         BufferedReader br = new BufferedReader(new FileReader(candidateFile));
         String line = "";
         long size = 0;
