@@ -54,6 +54,9 @@ import com.mondego.utility.Util;
 import com.mondego.validation.TestGson;
 
 import net.jmatrix.eproperties.EProperties;
+import spark.Spark;
+
+import static spark.Spark.*;
 
 /**
  * @author vaibhavsaini
@@ -131,11 +134,12 @@ public class SearchManager {
     public static long QUERY_LINES_TO_IGNORE = 0;
     public static String ROOT_DIR;
     private static final Logger logger = LogManager.getLogger(SearchManager.class);
+	private static final String ACTION_DAEMON = "daemon";
     public static boolean FATAL_ERROR;
     public static List<String> METRICS_ORDER_IN_SHARDS;
-    public static Map<String, Set<Long>> invertedIndex;
+    public static Map<String, Set<Long>> invertedIndex = new ConcurrentHashMap<String, Set<Long>>();
     private static int docId;
-    public static Map<Long, DocumentForInvertedIndex> documentsForII;
+    public static Map<Long, DocumentForInvertedIndex> documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
 
     public SearchManager(String[] args) throws IOException {
         SearchManager.clonePairsCount = 0;
@@ -453,6 +457,32 @@ public class SearchManager {
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_INIT)) {
             WordFrequencyStore wfs = new WordFrequencyStore();
             wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
+        } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
+        	// TODO start a background job to register the shard with the data manager
+        	theInstance.startDaemon();
+        	
+        	Spark.get("/hello", (req, res) -> "Hello World");
+        	
+        	Spark.post("/halt", (req, res) -> {
+        		Spark.stop();
+        		System.exit(0);
+        		return "Stopping process.";
+        		// TODO is there a better way to shutdown Spark and the jvm?
+        	});
+        	
+        	Spark.get("/status", (req, res) -> {
+        		// TODO return a message conveying the current state of the shard.
+        		return "Status command is not implemented yet.";
+        	});
+        	
+        	Spark.post("/query", (req, res) -> {
+        		// TODO get post data
+        		// TODO save a copy of post data?
+        		// TODO daemon will send a message to manager about results?
+        		// TODO daemon will have a command to return the last results?
+        		
+        		return "Query command is not implemented yet.";
+        	});
         }
         long estimatedTime = System.nanoTime() - start_time;
         logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
@@ -472,7 +502,47 @@ public class SearchManager {
         logger.info("completed on " + SearchManager.NODE_PREFIX);
     }
 
-    private void readAndUpdateRunMetadata() {
+    private void startDaemon() {
+    	/*
+    	 * Start the daemon and load the dataset into memory if it exists.
+    	 */
+    	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
+        File datasetDir = new File(SearchManager.DATASET_DIR);
+        if (datasetDir.isDirectory()) {
+            logger.info("Dataset directory: " + datasetDir.getAbsolutePath());
+            for (File inputFile : Util.getAllFilesRecur(datasetDir)) {
+                logger.info("indexing dataset file: " + inputFile.getAbsolutePath());
+                try {
+                	File candidateFile = inputFile;
+        			
+        			int completedLines = 0;
+        			while (true) {
+        				// SearchManager() spawns threads to process the index information from the query files.
+        				// TODO look at the processes spawned in SearchManager
+        				logger.info("creating indexes for " + candidateFile.getAbsolutePath());
+        				completedLines = theInstance.createIndexes(candidateFile, completedLines);  // sends read Dataset to invertedIndex, documentsForII. Cuts up some of the bags if they are on memory boundaries. I haven't read how the memory boundary works.
+        				logger.info("indexes created");
+        				logger.debug("COMPLETED LINES: " + completedLines);
+        				if (completedLines == -1) {
+        					break;
+        				}
+        			}
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    logger.error(SearchManager.NODE_PREFIX + ", something nasty, exiting. counter:"
+                            + SearchManager.statusCounter);
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            }
+        } else {
+            logger.error("File: " + datasetDir.getName() + " is not a directory. Exiting now");
+            System.exit(1);
+        }
+	}
+
+	private void readAndUpdateRunMetadata() {
 
         this.readRunMetadata();
         // update the runMetadata
@@ -819,8 +889,8 @@ public class SearchManager {
     }
 
     private int createIndexes(File candidateFile, int avoidLines) throws FileNotFoundException {
-        SearchManager.invertedIndex = new ConcurrentHashMap<String, Set<Long>>();
-        SearchManager.documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
+        //SearchManager.invertedIndex = new ConcurrentHashMap<String, Set<Long>>();
+        //SearchManager.documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
         BufferedReader br = new BufferedReader(new FileReader(candidateFile));
         String line = "";
         long size = 0;
