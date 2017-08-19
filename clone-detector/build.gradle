@@ -46,7 +46,8 @@ task jarCDI2(dependsOn: 'compile2', type: Jar) {
 sourceSets {
     main {
         java {
-            srcDirs = ['src/com/mondego']
+	  srcDir = 'src'
+	  srcDirs = ['src/com/mondego']
         }
     }
 }

@@ -480,7 +480,12 @@ public class SearchManager {
         		// TODO save a copy of post data?
         		// TODO daemon will send a message to manager about results?
         		// TODO daemon will have a command to return the last results?
+        		long timeStartSearch = System.currentTimeMillis();
         		theInstance.queryDaemon();
+        		long estimatedTime = System.nanoTime() - timeStartSearch;
+                logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
+                logger.info("number of clone pairs detected: " + SearchManager.clonePairsCount);  // TODO need to reset clonePairsCount after a run has been completed.
+                // TODO need to figure out which other variables need to be reset in between queries
         		
         		return "Query command is not implemented yet.";
         	});
