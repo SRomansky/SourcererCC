@@ -486,6 +486,7 @@ public class SearchManager {
                 logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
                 logger.info("number of clone pairs detected: " + SearchManager.clonePairsCount);  // TODO need to reset clonePairsCount after a run has been completed.
                 // TODO need to figure out which other variables need to be reset in between queries
+                // TODO read the cleanup scripts and see what is deleted/recreated for each run.
         		
         		return "Query command is not implemented yet.";
         	});
