@@ -180,24 +180,7 @@ public class SearchManager {
             SearchManager.completedNodes = SearchManager.ROOT_DIR + "nodes_completed.txt";
             this.completedQueries = new HashSet<Long>();
 
-            this.createShards(false);
-
-            logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + args[1]
-                    + System.lineSeparator() + " QLQ_THREADS: " + this.qlq_thread_count + " QBQ_THREADS: "
-                    + this.qbq_thread_count + " QCQ_THREADS: " + this.qcq_thread_count + " VCQ_THREADS: "
-                    + this.vcq_thread_count + " RCQ_THREADS: " + this.rcq_thread_count + System.lineSeparator());
-            SearchManager.queryLineQueue = new ThreadedChannel<String>(this.qlq_thread_count, QueryLineProcessor.class);
-            SearchManager.queryBlockQueue = new ThreadedChannel<QueryBlock>(this.qbq_thread_count,
-                    CandidateSearcher.class);
-            SearchManager.queryCandidatesQueue = new ThreadedChannel<QueryCandidates>(this.qcq_thread_count,
-                    CandidateProcessor.class);
-            SearchManager.verifyCandidateQueue = new ThreadedChannel<CandidatePair>(this.vcq_thread_count,
-                    CloneValidator.class);
-            SearchManager.reportCloneQueue = new ThreadedChannel<ClonePair>(this.rcq_thread_count, CloneReporter.class);
-            logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + args[1]
-                    + System.lineSeparator() + " BQ_THREADS: " + this.threadsToProcessBagsToSortQueue
-                    + System.lineSeparator() + " SBQ_THREADS: " + this.threadToProcessIIQueue + System.lineSeparator()
-                    + " IIQ_THREADS: " + this.threadsToProcessFIQueue + System.lineSeparator());
+            startQueryThreads();
         } else if (SearchManager.ACTION.equals(ACTION_CREATE_SHARDS)) {
             // indexerWriters = new ArrayList<IndexWriter>();
             this.createShards(true);
@@ -429,16 +412,8 @@ public class SearchManager {
             // theInstance.populateCompletedQueries();
             // theInstance.findCandidates();
 
-            SearchManager.queryLineQueue.shutdown();
-            logger.info("shutting down QLQ, " + System.currentTimeMillis());
-            logger.info("shutting down QBQ, " + (System.currentTimeMillis()));
-            SearchManager.queryBlockQueue.shutdown();
-            logger.info("shutting down QCQ, " + System.currentTimeMillis());
-            SearchManager.queryCandidatesQueue.shutdown();
-            logger.info("shutting down VCQ, " + System.currentTimeMillis());
-            SearchManager.verifyCandidateQueue.shutdown();
-            logger.info("shutting down RCQ, " + System.currentTimeMillis());
-            SearchManager.reportCloneQueue.shutdown();
+            theInstance.stopQueryThreads();
+            
             theInstance.timeSearch = System.currentTimeMillis() - timeStartSearch;
             signOffNode();
             if (SearchManager.NODE_PREFIX.equals("NODE_1")) {
@@ -509,11 +484,45 @@ public class SearchManager {
         logger.info("completed on " + SearchManager.NODE_PREFIX);
     }
 
+    private void startQueryThreads() {
+    	this.createShards(false);
+
+        logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
+                + System.lineSeparator() + " QLQ_THREADS: " + this.qlq_thread_count + " QBQ_THREADS: "
+                + this.qbq_thread_count + " QCQ_THREADS: " + this.qcq_thread_count + " VCQ_THREADS: "
+                + this.vcq_thread_count + " RCQ_THREADS: " + this.rcq_thread_count + System.lineSeparator());
+        SearchManager.queryLineQueue = new ThreadedChannel<String>(this.qlq_thread_count, QueryLineProcessor.class);
+        SearchManager.queryBlockQueue = new ThreadedChannel<QueryBlock>(this.qbq_thread_count,
+                CandidateSearcher.class);
+        SearchManager.queryCandidatesQueue = new ThreadedChannel<QueryCandidates>(this.qcq_thread_count,
+                CandidateProcessor.class);
+        SearchManager.verifyCandidateQueue = new ThreadedChannel<CandidatePair>(this.vcq_thread_count,
+                CloneValidator.class);
+        SearchManager.reportCloneQueue = new ThreadedChannel<ClonePair>(this.rcq_thread_count, CloneReporter.class);
+        logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
+                + System.lineSeparator() + " BQ_THREADS: " + this.threadsToProcessBagsToSortQueue
+                + System.lineSeparator() + " SBQ_THREADS: " + this.threadToProcessIIQueue + System.lineSeparator()
+                + " IIQ_THREADS: " + this.threadsToProcessFIQueue + System.lineSeparator());
+    }
+    
+    private void stopQueryThreads() {
+    	SearchManager.queryLineQueue.shutdown();
+        logger.info("shutting down QLQ, " + System.currentTimeMillis());
+        logger.info("shutting down QBQ, " + (System.currentTimeMillis()));
+        SearchManager.queryBlockQueue.shutdown();
+        logger.info("shutting down QCQ, " + System.currentTimeMillis());
+        SearchManager.queryCandidatesQueue.shutdown();
+        logger.info("shutting down VCQ, " + System.currentTimeMillis());
+        SearchManager.verifyCandidateQueue.shutdown();
+        logger.info("shutting down RCQ, " + System.currentTimeMillis());
+        SearchManager.reportCloneQueue.shutdown();
+    }
+    
     private void startDaemon() {
     	/*
     	 * Start the daemon and load the dataset into memory if it exists.
     	 */
-    	
+    	// TODO register the ip address and port number of this process with the manager service
     	// TODO if the daemon is restarted, or the dataset needs to be reloaded, the invertedIndex and documentsForII need to be cleared.
     	
     	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
@@ -528,7 +537,6 @@ public class SearchManager {
         			int completedLines = 0;
         			while (true) {
         				// SearchManager() spawns threads to process the index information from the query files.
-        				// TODO look at the processes spawned in SearchManager
         				logger.info("creating indexes for " + candidateFile.getAbsolutePath());
         				completedLines = theInstance.createIndexes(candidateFile, completedLines);  // sends read Dataset to invertedIndex, documentsForII. Cuts up some of the bags if they are on memory boundaries. I haven't read how the memory boundary works.
         				logger.info("indexes created");
@@ -557,24 +565,7 @@ public class SearchManager {
     	// start queue processors
     	this.completedQueries = new HashSet<Long>();
 
-        this.createShards(false);
-
-        logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
-                + System.lineSeparator() + " QLQ_THREADS: " + this.qlq_thread_count + " QBQ_THREADS: "
-                + this.qbq_thread_count + " QCQ_THREADS: " + this.qcq_thread_count + " VCQ_THREADS: "
-                + this.vcq_thread_count + " RCQ_THREADS: " + this.rcq_thread_count + System.lineSeparator());
-        SearchManager.queryLineQueue = new ThreadedChannel<String>(this.qlq_thread_count, QueryLineProcessor.class);
-        SearchManager.queryBlockQueue = new ThreadedChannel<QueryBlock>(this.qbq_thread_count,
-                CandidateSearcher.class);
-        SearchManager.queryCandidatesQueue = new ThreadedChannel<QueryCandidates>(this.qcq_thread_count,
-                CandidateProcessor.class);
-        SearchManager.verifyCandidateQueue = new ThreadedChannel<CandidatePair>(this.vcq_thread_count,
-                CloneValidator.class);
-        SearchManager.reportCloneQueue = new ThreadedChannel<ClonePair>(this.rcq_thread_count, CloneReporter.class);
-        logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
-                + System.lineSeparator() + " BQ_THREADS: " + this.threadsToProcessBagsToSortQueue
-                + System.lineSeparator() + " SBQ_THREADS: " + this.threadToProcessIIQueue + System.lineSeparator()
-                + " IIQ_THREADS: " + this.threadsToProcessFIQueue + System.lineSeparator());
+        startQueryThreads();
     	
     	
 		File datasetDir = new File(SearchManager.QUERY_DIR_PATH);
@@ -632,6 +623,7 @@ public class SearchManager {
             logger.error("File: " + datasetDir.getName() + " is not a directory. Exiting now");
             System.exit(1);
         }
+        stopQueryThreads();
 	}
 
 	private void readAndUpdateRunMetadata() {
