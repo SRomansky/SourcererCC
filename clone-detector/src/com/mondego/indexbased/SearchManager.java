@@ -451,7 +451,6 @@ public class SearchManager {
         		long estimatedTime = System.nanoTime() - timeStartSearch;
                 logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
                 logger.info("number of clone pairs detected: " + SearchManager.clonePairsCount);  // TODO need to reset clonePairsCount after a run has been completed.
-                // TODO need to figure out which other variables need to be reset in between queries
                 // TODO read the cleanup scripts and see what is deleted/recreated for each run.
         		
         		return "Query command is not implemented yet.";
@@ -559,7 +558,10 @@ public class SearchManager {
         this.startQueryThreads();
     	
         this.resetQueryCounters();	// reset the global counters
-        this.getQueryOutputDir();	// make a new output folder with a timestamp
+        long currentTime = System.nanoTime();
+        String outputDir = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR
+        		+ "_" + String.valueOf(currentTime);
+        Util.createDirs(outputDir);
     	
 		File datasetDir = new File(SearchManager.QUERY_DIR_PATH);
         if (datasetDir.isDirectory()) {
@@ -574,8 +576,8 @@ public class SearchManager {
                     try {
                     	// TODO make an output directory using a timestamp
                     	// TODO figure out how these will be reported from the web service
-                        String cloneReportFileName = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR
-                        		+ "/" + filename + "clones_index_WITH_FILTER.txt";
+                    	
+                        String cloneReportFileName = outputDir + "/" + filename + "clones_index_WITH_FILTER.txt";
                         
                         File cloneReportFile = new File(cloneReportFileName);
                         if (cloneReportFile.exists()) {
@@ -583,12 +585,11 @@ public class SearchManager {
                         } else {
                             this.appendToExistingFile = false;
                         }
-                        SearchManager.clonesWriter = Util.openFile(SearchManager.OUTPUT_DIR
-                                + SearchManager.th / SearchManager.MUL_FACTOR + "/" + filename + "clones_index_WITH_FILTER.txt",
+                        SearchManager.clonesWriter = Util.openFile(outputDir +"/" + filename + "clones_index_WITH_FILTER.txt",
                                 this.appendToExistingFile);
                         // recoveryWriter
                         SearchManager.recoveryWriter = Util.openFile(
-                                SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR + "/recovery.txt",
+                                outputDir + "/recovery.txt",
                                 false);
                     } catch (IOException e) {
                         logger.error(e.getMessage() + " exiting");
@@ -619,11 +620,6 @@ public class SearchManager {
             System.exit(1);
         }
         stopQueryThreads();
-	}
-
-	private void getQueryOutputDir() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	private void resetQueryCounters() {
