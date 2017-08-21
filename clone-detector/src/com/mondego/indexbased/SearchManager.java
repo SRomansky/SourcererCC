@@ -142,19 +142,10 @@ public class SearchManager {
     public static Map<Long, DocumentForInvertedIndex> documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
 
     public SearchManager(String[] args) throws IOException {
-        SearchManager.clonePairsCount = 0;
-        this.cloneHelper = new CloneHelper();
-        this.timeSpentInProcessResult = 0;
-        SearchManager.timeSpentInSearchingCandidates = 0;
-        this.timeIndexing = 0;
-        this.timeGlobalTokenPositionCreation = 0;
-        this.timeSearch = 0;
-        SearchManager.numCandidates = 0;
-        this.timeTotal = 0;
-        this.appendToExistingFile = true;
-        this.bagsSortTime = 0;
-        SearchManager.ACTION = args[0];
-        SearchManager.statusCounter = 0;
+    	this.resetQueryCounters();
+    	SearchManager.ACTION = args[0];
+    	
+    	
         SearchManager.globalWordFreqMap = new HashMap<String, Long>();
         try {
 
@@ -455,7 +446,7 @@ public class SearchManager {
         		// TODO save a copy of post data?
         		// TODO daemon will send a message to manager about results?
         		// TODO daemon will have a command to return the last results?
-        		long timeStartSearch = System.currentTimeMillis();
+        		long timeStartSearch = System.nanoTime();
         		theInstance.queryDaemon();
         		long estimatedTime = System.nanoTime() - timeStartSearch;
                 logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
@@ -565,8 +556,10 @@ public class SearchManager {
     	// start queue processors
     	this.completedQueries = new HashSet<Long>();
 
-        startQueryThreads();
+        this.startQueryThreads();
     	
+        this.resetQueryCounters();	// reset the global counters
+        this.getQueryOutputDir();	// make a new output folder with a timestamp
     	
 		File datasetDir = new File(SearchManager.QUERY_DIR_PATH);
         if (datasetDir.isDirectory()) {
@@ -579,9 +572,11 @@ public class SearchManager {
                     logger.info("Query File: " + queryFile.getAbsolutePath());
                     String filename = queryFile.getName().replaceFirst("[.][^.]+$", "");
                     try {
+                    	// TODO make an output directory using a timestamp
                     	// TODO figure out how these will be reported from the web service
                         String cloneReportFileName = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR
-                                + "/" + filename + "clones_index_WITH_FILTER.txt";
+                        		+ "/" + filename + "clones_index_WITH_FILTER.txt";
+                        
                         File cloneReportFile = new File(cloneReportFileName);
                         if (cloneReportFile.exists()) {
                             this.appendToExistingFile = true;
@@ -624,6 +619,26 @@ public class SearchManager {
             System.exit(1);
         }
         stopQueryThreads();
+	}
+
+	private void getQueryOutputDir() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void resetQueryCounters() {
+		SearchManager.clonePairsCount = 0;
+        this.cloneHelper = new CloneHelper();
+        this.timeSpentInProcessResult = 0;
+        SearchManager.timeSpentInSearchingCandidates = 0;
+        this.timeIndexing = 0;
+        this.timeGlobalTokenPositionCreation = 0;
+        this.timeSearch = 0;
+        SearchManager.numCandidates = 0;
+        this.timeTotal = 0;
+        this.appendToExistingFile = true;
+        this.bagsSortTime = 0;
+        SearchManager.statusCounter = 0;
 	}
 
 	private void readAndUpdateRunMetadata() {
