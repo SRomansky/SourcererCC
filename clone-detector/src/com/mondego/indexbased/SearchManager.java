@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
@@ -17,6 +18,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.servlet.MultipartConfigElement;
+import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -141,6 +149,8 @@ public class SearchManager {
     private static int docId;
     public static Map<Long, DocumentForInvertedIndex> documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
 
+    public static boolean daemon_loaded = false;
+    
     public SearchManager(String[] args) throws IOException {
     	this.resetQueryCounters();
     	SearchManager.ACTION = args[0];
@@ -424,12 +434,25 @@ public class SearchManager {
             WordFrequencyStore wfs = new WordFrequencyStore();
             wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
+        	Spark.port(4568); // TODO hard coded
+        	File uploadDir = new File("query_sets"); // TODO pick better dir for this?
+    		uploadDir.mkdir();
+
+            Spark.staticFiles.externalLocation("query_sets");
         	// TODO start a background job to register the shard with the data manager
-        	theInstance.startDaemon();
+        	// Daemon.setState(initializing);
+        	Thread t = new Thread(new Runnable() {
+        		public void run() {
+        			theInstance.startDaemon();
+        			theInstance.daemon_loaded = true;
+        		}
+        	});
+        	t.start();
         	
         	Spark.get("/hello", (req, res) -> "Hello World");
         	
         	Spark.post("/halt", (req, res) -> {
+        		// Daemon.setState(halting);
         		Spark.stop();
         		System.exit(0);
         		return "Stopping process.";
@@ -437,11 +460,31 @@ public class SearchManager {
         	});
         	
         	Spark.get("/status", (req, res) -> {
+        		// String state = Daemon.getState();
         		// TODO return a message conveying the current state of the shard.
         		return "Status command is not implemented yet.";
         	});
         	
-        	Spark.post("/query", (req, res) -> {
+        	Spark.post("/query", "*/*", (req, res) -> {
+        		// Daemon.setState(querying);
+        		if (!theInstance.daemon_loaded) {
+        			return "daemon is still initializing.";
+        		}
+        		
+        		Path tempFile = Files.createTempFile(uploadDir.toPath(), ".zip", "");
+
+                req.attribute("org.eclipse.jetty.multipartConfig", new MultipartConfigElement("/temp"));
+
+                try (InputStream input = req.raw().getPart("query_file").getInputStream()) { // getPart needs to use same "name" as input field in form
+                    Files.copy(input, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                }
+                //logInfo(req, tempFile);
+                byte[] b = Files.readAllBytes(tempFile);
+                byte[] hash = MessageDigest.getInstance("MD5").digest(b);
+                String shash = DatatypeConverter.printHexBinary(hash);
+                System.out.println("Got file with hash: " + shash);
+        		
+        		// TODO wait until the daemon has started before running a query
         		// TODO get post data
         		// TODO save a copy of post data?
         		// TODO daemon will send a message to manager about results?
