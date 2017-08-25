@@ -150,6 +150,7 @@ public class SearchManager {
     public static Map<Long, DocumentForInvertedIndex> documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
 
     public static boolean daemon_loaded = false;
+    public static Daemon daemon;
     
     public SearchManager(String[] args) throws IOException {
     	this.resetQueryCounters();
@@ -434,6 +435,7 @@ public class SearchManager {
             WordFrequencyStore wfs = new WordFrequencyStore();
             wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
+        	daemon = new Daemon(theInstance);
         	Spark.port(4568); // TODO hard coded
         	File uploadDir = new File("query_sets"); // TODO pick better dir for this?
     		uploadDir.mkdir();
@@ -441,13 +443,8 @@ public class SearchManager {
             Spark.staticFiles.externalLocation("query_sets");
         	// TODO start a background job to register the shard with the data manager
         	// Daemon.setState(initializing);
-        	Thread t = new Thread(new Runnable() {
-        		public void run() {
-        			theInstance.startDaemon();
-        			theInstance.daemon_loaded = true;
-        		}
-        	});
-        	t.start();
+            theInstance.daemon.start();
+            theInstance.daemon_loaded = true;
         	
         	Spark.get("/hello", (req, res) -> "Hello World");
         	
@@ -467,6 +464,7 @@ public class SearchManager {
         	
         	Spark.post("/query", "*/*", (req, res) -> {
         		// Daemon.setState(querying);
+        		
         		if (!theInstance.daemon_loaded) {
         			return "daemon is still initializing.";
         		}
@@ -490,12 +488,13 @@ public class SearchManager {
         		// TODO daemon will send a message to manager about results?
         		// TODO daemon will have a command to return the last results?
         		long timeStartSearch = System.nanoTime();
-        		theInstance.queryDaemon();
+        		theInstance.daemon.query();
         		long estimatedTime = System.nanoTime() - timeStartSearch;
                 logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
                 logger.info("number of clone pairs detected: " + SearchManager.clonePairsCount);  // TODO need to reset clonePairsCount after a run has been completed.
                 // TODO read the cleanup scripts and see what is deleted/recreated for each run.
-        		
+        		// TODO store the query results?
+                // TODO report the query results?
         		return "Query command is not implemented yet.";
         	});
         }
@@ -517,7 +516,7 @@ public class SearchManager {
         logger.info("completed on " + SearchManager.NODE_PREFIX);
     }
 
-    private void startQueryThreads() {
+    public void startQueryThreads() {
     	this.createShards(false);
 
         logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
@@ -538,7 +537,7 @@ public class SearchManager {
                 + " IIQ_THREADS: " + this.threadsToProcessFIQueue + System.lineSeparator());
     }
     
-    private void stopQueryThreads() {
+    public void stopQueryThreads() {
     	SearchManager.queryLineQueue.shutdown();
         logger.info("shutting down QLQ, " + System.currentTimeMillis());
         logger.info("shutting down QBQ, " + (System.currentTimeMillis()));
@@ -551,121 +550,9 @@ public class SearchManager {
         SearchManager.reportCloneQueue.shutdown();
     }
     
-    private void startDaemon() {
-    	/*
-    	 * Start the daemon and load the dataset into memory if it exists.
-    	 */
-    	// TODO register the ip address and port number of this process with the manager service
-    	// TODO if the daemon is restarted, or the dataset needs to be reloaded, the invertedIndex and documentsForII need to be cleared.
-    	
-    	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
-        File datasetDir = new File(SearchManager.DATASET_DIR);
-        if (datasetDir.isDirectory()) {
-            logger.info("Dataset directory: " + datasetDir.getAbsolutePath());
-            for (File inputFile : Util.getAllFilesRecur(datasetDir)) {
-                logger.info("indexing dataset file: " + inputFile.getAbsolutePath());
-                try {
-                	File candidateFile = inputFile;
-        			
-        			int completedLines = 0;
-        			while (true) {
-        				// SearchManager() spawns threads to process the index information from the query files.
-        				logger.info("creating indexes for " + candidateFile.getAbsolutePath());
-        				completedLines = theInstance.createIndexes(candidateFile, completedLines);  // sends read Dataset to invertedIndex, documentsForII. Cuts up some of the bags if they are on memory boundaries. I haven't read how the memory boundary works.
-        				logger.info("indexes created");
-        				logger.debug("COMPLETED LINES: " + completedLines);
-        				if (completedLines == -1) {
-        					break;
-        				}
-        			}
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    logger.error(SearchManager.NODE_PREFIX + ", something nasty, exiting. counter:"
-                            + SearchManager.statusCounter);
-                    e.printStackTrace();
-                    System.exit(1);
-                }
-            }
-        } else {
-            logger.error("File: " + datasetDir.getName() + " is not a directory. Exiting now");
-            System.exit(1);
-        }
-	}
     
-    private void queryDaemon() {
-    	// TODO prevent multiple queries at the same time?
-    	// start queue processors
-    	this.completedQueries = new HashSet<Long>();
 
-        this.startQueryThreads();
-    	
-        this.resetQueryCounters();	// reset the global counters
-        long currentTime = System.nanoTime();
-        String outputDir = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR
-        		+ "_" + String.valueOf(currentTime);
-        Util.createDirs(outputDir);
-    	
-		File datasetDir = new File(SearchManager.QUERY_DIR_PATH);
-        if (datasetDir.isDirectory()) {
-            logger.info("QuerySet directory: " + datasetDir.getAbsolutePath());
-            for (File inputFile : Util.getAllFilesRecur(datasetDir)) {
-                logger.info("indexing QuerySet file: " + inputFile.getAbsolutePath());
-                try {
-                	File queryFile = inputFile;
-                    QueryFileProcessor queryFileProcessor = new QueryFileProcessor();
-                    logger.info("Query File: " + queryFile.getAbsolutePath());
-                    String filename = queryFile.getName().replaceFirst("[.][^.]+$", "");
-                    try {
-                    	// TODO make an output directory using a timestamp
-                    	// TODO figure out how these will be reported from the web service
-                    	
-                        String cloneReportFileName = outputDir + "/" + filename + "clones_index_WITH_FILTER.txt";
-                        
-                        File cloneReportFile = new File(cloneReportFileName);
-                        if (cloneReportFile.exists()) {
-                            this.appendToExistingFile = true;
-                        } else {
-                            this.appendToExistingFile = false;
-                        }
-                        SearchManager.clonesWriter = Util.openFile(outputDir +"/" + filename + "clones_index_WITH_FILTER.txt",
-                                this.appendToExistingFile);
-                        // recoveryWriter
-                        SearchManager.recoveryWriter = Util.openFile(
-                                outputDir + "/recovery.txt",
-                                false);
-                    } catch (IOException e) {
-                        logger.error(e.getMessage() + " exiting");
-                        System.exit(1);
-                    }
-                    
-                    // TODO does this code need the while loop?
-        			try {
-        				TokensFileReader tfr = new TokensFileReader(SearchManager.NODE_PREFIX, queryFile,
-        						SearchManager.max_tokens, queryFileProcessor);
-        				tfr.read();
-        			} catch (IOException e) {
-        				logger.error(e.getMessage() + " skiping to next file");
-        			} catch (ParseException e) {
-        				logger.error(SearchManager.NODE_PREFIX + "parseException caught. message: " + e.getMessage());
-        				e.printStackTrace();
-        			}
-        			
-                } catch (Exception e) {
-                    logger.error(SearchManager.NODE_PREFIX + ", something nasty, exiting. counter:"
-                            + SearchManager.statusCounter);
-                    e.printStackTrace();
-                    System.exit(1);
-                }
-            }
-        } else {
-            logger.error("File: " + datasetDir.getName() + " is not a directory. Exiting now");
-            System.exit(1);
-        }
-        stopQueryThreads();
-	}
-
-	private void resetQueryCounters() {
+	public void resetQueryCounters() {
 		SearchManager.clonePairsCount = 0;
         this.cloneHelper = new CloneHelper();
         this.timeSpentInProcessResult = 0;
@@ -1028,7 +915,7 @@ public class SearchManager {
         }
     }
 
-    private int createIndexes(File candidateFile, int avoidLines) throws FileNotFoundException {
+    public int createIndexes(File candidateFile, int avoidLines) throws FileNotFoundException {
         //SearchManager.invertedIndex = new ConcurrentHashMap<String, Set<Long>>();
         //SearchManager.documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
         BufferedReader br = new BufferedReader(new FileReader(candidateFile));
