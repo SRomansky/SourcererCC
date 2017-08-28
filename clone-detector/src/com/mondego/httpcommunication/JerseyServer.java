@@ -15,7 +15,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import com.mondego.indexbased.Daemon;
 
 public class JerseyServer {
-	private static URI BASE_URI = URI.create("http://localhost:4568/");
+	private static URI BASE_URI = URI.create("http://localhost:4568/");  // TODO should use theInstance.daemonPort
     public static String ROOT_PATH = "";
     
     public JerseyServer() {
@@ -43,6 +43,7 @@ public class JerseyServer {
     public static void run() {
     	try {
     		Daemon daemon = Daemon.getInstance();
+    		daemon.register();
     		daemon.start(); // load dataset
     		/*
     		// TODO setup file upload directory

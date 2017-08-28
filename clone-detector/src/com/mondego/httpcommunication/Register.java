@@ -24,8 +24,8 @@ public class Register {
 	 */
 	@GET
     //@Produces(MediaType.TEXT_PLAIN)
-    public String sendRegistration() {
-    	// Example POST to send some information to the manager
+    public static String sendRegistration() {
+    	// TODO if the registration message was not successful, retry
     	Client client = ClientBuilder.newClient();
     	WebTarget webTarget = client.target("http://localhost:4567/register"); // TODO dynamic URI
     	MultivaluedMap formData = new MultivaluedStringMap();

@@ -7,9 +7,5 @@ RUN wget -q https://services.gradle.org/distributions/gradle-3.3-bin.zip \
 ENV GRADLE_HOME /opt/gradle-3.3
 ENV PATH $PATH:/opt/gradle-3.3/bin
 
-
-RUN apt-get install -y git
-RUN git clone -b inmemcc_fork https://github.com/SRomansky/SourcererCC.git /home/SourcererCC
-
+# The SourcererCC file should be made with an external script
 WORKDIR /home/SourcererCC/clone-detector
-RUN gradle jarCDI2
