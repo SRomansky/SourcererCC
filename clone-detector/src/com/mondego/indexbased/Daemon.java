@@ -35,6 +35,8 @@ public class Daemon {
 	public static SearchManager sm = null;
 	private static final Logger logger = LogManager.getLogger(Daemon.class);
 	private static Daemon daemon = null;
+	public static String ip = "";
+	public static int port = 0;
 	
 	public static Daemon getInstance() {
 		if (daemon == null) {
@@ -44,8 +46,10 @@ public class Daemon {
 		return daemon;
 	}
 	
-	public Daemon(SearchManager theInstance) {
+	public Daemon(SearchManager theInstance, String daemonIp, int daemonPort) {
 		sm = theInstance;
+		ip = daemonIp;
+		port = daemonPort;
 		daemon = this;
 	}
 	

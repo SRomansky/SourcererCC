@@ -15,6 +15,7 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -449,7 +450,8 @@ public class SearchManager {
             WordFrequencyStore wfs = new WordFrequencyStore();
             wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
-        	theInstance.daemon = new Daemon(theInstance); // builds global daemon.
+        	String ip = InetAddress.getLocalHost().getHostAddress();  // TODO this might be the wrong ip
+        	theInstance.daemon = new Daemon(theInstance, ip, theInstance.daemonPort); // builds global daemon.
         	
         	// XXX Jersey stuff
         	// Base URI the Grizzly HTTP server will listen on

@@ -33,7 +33,7 @@ public class JerseyServer {
     private static HttpServer startServer() {
         // create a resource config that scans for JAX-RS resources and providers
         // in com.example package
-        final ResourceConfig rc = new ResourceConfig().packages("com.mondego.indexbased");
+        final ResourceConfig rc = new ResourceConfig().packages("com.mondego.indexbased");  // TODO upodate this to httpcommunication?
 
         // create and start a new instance of grizzly http server
         // exposing the Jersey application at BASE_URI

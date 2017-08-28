@@ -23,14 +23,14 @@ public class Register {
 	 * @return
 	 */
 	@GET
-    @Produces(MediaType.TEXT_PLAIN)
+    //@Produces(MediaType.TEXT_PLAIN)
     public String sendRegistration() {
     	// Example POST to send some information to the manager
     	Client client = ClientBuilder.newClient();
     	WebTarget webTarget = client.target("http://localhost:4567/register"); // TODO dynamic URI
     	MultivaluedMap formData = new MultivaluedStringMap();
-    	formData.add("name1", "val1");
-    	formData.add("name2", "val2");
+    	formData.add("ip", "" + Daemon.getInstance().ip);
+    	formData.add("port", "" + Daemon.getInstance().port);
     	Response response = webTarget
     			.request()
     			.post(Entity.form(formData));
