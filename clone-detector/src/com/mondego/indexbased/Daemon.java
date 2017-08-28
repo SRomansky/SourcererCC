@@ -32,11 +32,21 @@ import com.mondego.utility.Util;
 import spark.Request;
 
 public class Daemon {
-	private SearchManager sm;
+	public static SearchManager sm = null;
 	private static final Logger logger = LogManager.getLogger(Daemon.class);
+	private static Daemon daemon = null;
+	
+	public static Daemon getInstance() {
+		if (daemon == null) {
+			logger.warn("Daemon not initialized.");
+		}
+		
+		return daemon;
+	}
 	
 	public Daemon(SearchManager theInstance) {
 		sm = theInstance;
+		daemon = this;
 	}
 	
 	public void start() {

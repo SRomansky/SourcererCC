@@ -15,6 +15,7 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -61,6 +62,7 @@ import com.mondego.utility.TokensFileReader;
 import com.mondego.utility.Util;
 import com.mondego.validation.TestGson;
 
+import com.mondego.httpcommunication.JerseyServer;
 import net.jmatrix.eproperties.EProperties;
 import spark.Spark;
 
@@ -71,7 +73,7 @@ import static spark.Spark.*;
  * 
  */
 public class SearchManager {
-    private static long clonePairsCount;
+    public static long clonePairsCount;
     public static CodeSearcher gtpmSearcher;
     public CloneHelper cloneHelper;
     public static String QUERY_DIR_PATH;
@@ -150,7 +152,8 @@ public class SearchManager {
     public static Map<Long, DocumentForInvertedIndex> documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
 
     public static boolean daemon_loaded = false;
-    public Daemon daemon;
+    public static Daemon daemon;
+    public JerseyServer server;
     public int daemonPort = 4568;
 	public String managerURL = "localhost";
 	public int managerPort = 4567;
@@ -446,56 +449,13 @@ public class SearchManager {
             WordFrequencyStore wfs = new WordFrequencyStore();
             wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
-        	theInstance.daemon = new Daemon(theInstance);
-        	Spark.port(4568); // TODO hard coded
-        	File uploadDir = new File("query_sets"); // TODO pick better dir for this?
-    		uploadDir.mkdir();
-
-            Spark.staticFiles.externalLocation("query_sets");
-        	// TODO start a background job to register the shard with the data manager
-        	// Daemon.setState(initializing);
-            theInstance.daemon.register();
-            theInstance.daemon.start();
-            theInstance.daemon_loaded = true;
+        	theInstance.daemon = new Daemon(theInstance); // builds global daemon.
         	
-        	Spark.get("/hello", (req, res) -> "Hello World");
-        	
-        	Spark.post("/halt", (req, res) -> {
-        		// Daemon.setState(halting);
-        		Spark.stop();
-        		System.exit(0);
-        		return "Stopping process.";
-        		// TODO is there a better way to shutdown Spark and the jvm?
-        	});
-        	
-        	Spark.get("/status", (req, res) -> {
-        		// String state = Daemon.getState();
-        		// TODO return a message conveying the current state of the shard.
-        		return "Status command is not implemented yet.";
-        	});
-        	
-        	Spark.post("/query", "*/*", (req, res) -> {
-        		if (!theInstance.daemon_loaded) {
-        			return "daemon is still initializing.";
-        		}
-        		
-        		Path tempFile = theInstance.daemon.getPostFile(uploadDir, req);
-        		
-        		// TODO wait until the daemon has started before running a query
-        		// TODO save a copy of post data?
-        		// TODO daemon will send a message to manager about results?
-        		// TODO daemon will have a command to return the last results?
-        		long timeStartSearch = System.nanoTime();
-        		// Daemon.setState(running query);
-        		theInstance.daemon.query();
-        		long estimatedTime = System.nanoTime() - timeStartSearch;
-                logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
-                logger.info("number of clone pairs detected: " + SearchManager.clonePairsCount);  // TODO need to reset clonePairsCount after a run has been completed.
-                // TODO read the cleanup scripts and see what is deleted/recreated for each run.
-        		// TODO store the query results?
-                // TODO report the query results?
-        		return "Query command is not implemented yet.";
-        	});
+        	// XXX Jersey stuff
+        	// Base URI the Grizzly HTTP server will listen on
+        	theInstance.server = new JerseyServer(); // TODO default config
+        	theInstance.server.run();
+        	// XXX Jersey stuff
         }
         long estimatedTime = System.nanoTime() - start_time;
         logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
