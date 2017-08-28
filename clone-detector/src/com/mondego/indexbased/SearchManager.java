@@ -150,7 +150,10 @@ public class SearchManager {
     public static Map<Long, DocumentForInvertedIndex> documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
 
     public static boolean daemon_loaded = false;
-    public static Daemon daemon;
+    public Daemon daemon;
+    public int daemonPort = 4568;
+	public String managerURL = "localhost";
+	public int managerPort = 4567;
     
     public SearchManager(String[] args) throws IOException {
     	this.resetQueryCounters();
@@ -186,6 +189,17 @@ public class SearchManager {
         } else if (SearchManager.ACTION.equals(ACTION_CREATE_SHARDS)) {
             // indexerWriters = new ArrayList<IndexWriter>();
             this.createShards(true);
+        }
+        
+        try {
+        	if (args.length >= 3) {
+        		this.daemonPort = Integer.parseInt(args[2]);
+        	}
+        	else {
+        		logger.warn("Failed to parse port numner. Using default port: " + this.daemonPort);
+        	}
+        } catch (NumberFormatException e) {
+        	logger.warn("Failed to parse port numner. Using default port: " + this.daemonPort);
         }
     }
 
@@ -361,9 +375,6 @@ public class SearchManager {
         fis = new FileInputStream(propertiesPath);
         try {
             properties.load(fis);
-            String[] params = new String[2];
-            params[0] = args[0];
-            params[1] = args[1];
             SearchManager.DATASET_DIR = SearchManager.ROOT_DIR + properties.getProperty("DATASET_DIR_PATH");
             SearchManager.isGenCandidateStats = Boolean
                     .parseBoolean(properties.getProperty("IS_GEN_CANDIDATE_STATISTICS"));
@@ -374,7 +385,7 @@ public class SearchManager {
             logger.debug("Query path:" + SearchManager.QUERY_DIR_PATH);
             SearchManager.LOG_PROCESSED_LINENUMBER_AFTER_X_LINES = Integer
                     .parseInt(properties.getProperty("LOG_PROCESSED_LINENUMBER_AFTER_X_LINES", "1000"));
-            theInstance = new SearchManager(params);
+            theInstance = new SearchManager(args);
             String shardsOrder = properties.getProperty("METRICS_ORDER_IN_SHARDS");
             SearchManager.METRICS_ORDER_IN_SHARDS = new ArrayList<String>();
             for (String metric : shardsOrder.split(",")) {
@@ -435,7 +446,7 @@ public class SearchManager {
             WordFrequencyStore wfs = new WordFrequencyStore();
             wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
-        	daemon = new Daemon(theInstance);
+        	theInstance.daemon = new Daemon(theInstance);
         	Spark.port(4568); // TODO hard coded
         	File uploadDir = new File("query_sets"); // TODO pick better dir for this?
     		uploadDir.mkdir();
@@ -443,6 +454,7 @@ public class SearchManager {
             Spark.staticFiles.externalLocation("query_sets");
         	// TODO start a background job to register the shard with the data manager
         	// Daemon.setState(initializing);
+            theInstance.daemon.register();
             theInstance.daemon.start();
             theInstance.daemon_loaded = true;
         	
@@ -463,31 +475,18 @@ public class SearchManager {
         	});
         	
         	Spark.post("/query", "*/*", (req, res) -> {
-        		// Daemon.setState(querying);
-        		
         		if (!theInstance.daemon_loaded) {
         			return "daemon is still initializing.";
         		}
         		
-        		Path tempFile = Files.createTempFile(uploadDir.toPath(), ".zip", "");
-
-                req.attribute("org.eclipse.jetty.multipartConfig", new MultipartConfigElement("/temp"));
-
-                try (InputStream input = req.raw().getPart("query_file").getInputStream()) { // getPart needs to use same "name" as input field in form
-                    Files.copy(input, tempFile, StandardCopyOption.REPLACE_EXISTING);
-                }
-                //logInfo(req, tempFile);
-                byte[] b = Files.readAllBytes(tempFile);
-                byte[] hash = MessageDigest.getInstance("MD5").digest(b);
-                String shash = DatatypeConverter.printHexBinary(hash);
-                System.out.println("Got file with hash: " + shash);
+        		Path tempFile = theInstance.daemon.getPostFile(uploadDir, req);
         		
         		// TODO wait until the daemon has started before running a query
-        		// TODO get post data
         		// TODO save a copy of post data?
         		// TODO daemon will send a message to manager about results?
         		// TODO daemon will have a command to return the last results?
         		long timeStartSearch = System.nanoTime();
+        		// Daemon.setState(running query);
         		theInstance.daemon.query();
         		long estimatedTime = System.nanoTime() - timeStartSearch;
                 logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");

@@ -65,6 +65,15 @@ buildscript {
 
   dependencies {
     classpath group: "com.sparkjava", name: "spark-core", version: "2.6.0"
+    classpath group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.3'
+    classpath group: 'org.glassfish.jersey.core', name: 'jersey-common', version: '2.26-b09'
+    classpath group: 'org.glassfish.jersey.core', name: 'jersey-client', version: '2.26-b09'
+    classpath group: 'org.glassfish.jersey.core', name: 'jersey-server', version: '2.26-b09'
+    classpath group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: '2.26-b09'
+    classpath group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-servlet', version: '2.26-b09'
+    classpath group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: '2.26-b09'
+    classpath group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: '2.26-b09'
+    classpath group: 'org.glassfish.jersey', name: 'jersey-bom', version: '2.26-b09', ext: 'pom'
   }
 }
 

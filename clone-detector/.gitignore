@@ -9,3 +9,4 @@ input/dataset/*
 dist*
 SCC_LOGS*
 /.gradle/
+lib/*.jar
