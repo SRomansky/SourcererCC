@@ -154,6 +154,7 @@ public class SearchManager {
 
     public static boolean daemon_loaded = false;
     public static Daemon daemon;
+	public static String OUTPUT_DIR_TH;
     public JerseyServer server;
     public int daemonPort = 4568;
 	public String managerURL = "localhost";
@@ -386,6 +387,7 @@ public class SearchManager {
             SearchManager.isStatusCounterOn = Boolean.parseBoolean(properties.getProperty("IS_STATUS_REPORTER_ON"));
             SearchManager.NODE_PREFIX = properties.getProperty("NODE_PREFIX").toUpperCase();
             SearchManager.OUTPUT_DIR = SearchManager.ROOT_DIR + properties.getProperty("OUTPUT_DIR");
+            SearchManager.OUTPUT_DIR_TH = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR;
             SearchManager.QUERY_DIR_PATH = SearchManager.ROOT_DIR + properties.getProperty("QUERY_DIR_PATH");
             logger.debug("Query path:" + SearchManager.QUERY_DIR_PATH);
             SearchManager.LOG_PROCESSED_LINENUMBER_AFTER_X_LINES = Integer

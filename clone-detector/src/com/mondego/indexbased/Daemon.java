@@ -38,6 +38,7 @@ public class Daemon {
 	private static Daemon daemon = null;
 	public static String ip = "";
 	public static int port = 0;
+	public static String outputDir = null;
 	
 	public static Daemon getInstance() {
 		if (daemon == null) {
@@ -105,7 +106,7 @@ public class Daemon {
     	
         sm.resetQueryCounters();	// reset the global counters
         long currentTime = System.nanoTime();
-        String outputDir = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR
+        outputDir = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR
         		+ "_" + String.valueOf(currentTime);
         Util.createDirs(outputDir);
     	
@@ -212,38 +213,11 @@ public class Daemon {
 		 */
 
 		Register.sendRegistration();
-//		InetAddress ip = null;
-//		try {
-//			ip = InetAddress.getLocalHost();
-//		} catch (UnknownHostException e) {
-//			logger.error("Failed to get ip address of client application."); // TODO handle big error..
-//			e.printStackTrace();
-//		}
-//		int port = sm.daemonPort;
-//		
-//		if (ip == null) {
-//			// uh oh
-//		}
-//		
-//		MultipartEntityBuilder mb = MultipartEntityBuilder.create();//org.apache.http.entity.mime
-//	    mb.addTextBody("foo", "bar");
-//	    mb.addTextBody("ip", ip.toString());
-//	    mb.addTextBody("port", String.valueOf(sm.daemonPort));
-//	    //mb.addBinaryBody("query_file", tempFile.toFile());
-//	    org.apache.http.HttpEntity e = mb.build();
-//
-//	    try {
-//	    	String registrationUrl = "http://" + sm.managerURL + ":" + sm.managerPort + "/register";
-//	    	URLConnection conn = new URL(registrationUrl).openConnection();
-//	    	conn.setDoOutput(true);
-//	    	conn.addRequestProperty(e.getContentType().getName(), e.getContentType().getValue());//header "Content-Type"...
-//	    	conn.addRequestProperty("Content-Length", String.valueOf(e.getContentLength()));
-//	    	OutputStream fout = conn.getOutputStream();
-//	    	e.writeTo(fout);
-//	    	fout.close();
-//	    	conn.getInputStream().close();//output of remote url
-//	    } catch (IOException re) {
-//	    	logger.error("Failed to send registration POST");
-//	    }
+	}
+	
+	public File getResults() {
+		//File resultsPath = new File(SearchManager.OUTPUT_DIR_TH);
+		File resultsPath = new File(outputDir);
+		return resultsPath;
 	}
 }

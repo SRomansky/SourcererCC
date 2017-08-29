@@ -1,12 +1,16 @@
 package com.mondego.httpcommunication;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -21,7 +25,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import com.mondego.indexbased.Daemon;
 import com.mondego.indexbased.SearchManager;
 
-@Path("query")
+@Path("/query")
 public class Query {
 	private static final Logger logger = LogManager.getLogger(Query.class);
 	
@@ -35,10 +39,14 @@ public class Query {
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public String query(@FormDataParam("query_file") InputStream uploadedInputStream) {
+		/**
+		 * run a query on the client using files from the POST message
+		 */
+		
 		File uploadDir = new File("query_sets");  // TODO refactor into daemon
 		uploadDir.mkdir();
 		
-		// read stuff from the user and send it to client
+		/* read contents from manager */
 		java.nio.file.Path tempFile = null;
 		String shash = "";
 		try {
@@ -52,9 +60,19 @@ public class Query {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		System.out.println(shash);  // TODO log the hash? It could be useful for debugging?
 		
-		System.out.println(shash);
+		/* unpack contents from manager into query directory */
+		// XXX check if querydir==datasetdir: log a warning if it is.
+		// unpack contents into querydir
+		// TODO generate a new querydir per query? or reuse the same querydir
 		
+		// TODO check if the daemon is busy in a query
+		// TODO if the daemon is busy there is a bug :)
+		// TODO (later) if the daemon is busy, send a POST with an error to results/{id} on the manager
+		
+		
+		/* run the query */
 		// TODO check if daemon status is loaded
 //		if (!theInstance.daemon_loaded) {
 //			return "daemon is still initializing.";
@@ -77,9 +95,72 @@ public class Query {
         // TODO read the cleanup scripts and see what is deleted/recreated for each run.
 		// TODO store the query results?
         // TODO report the query results?
+        
+        /* get the query results and send them to the manager */
+        // XXX uses output dir from SCC like SourcererCC/clone-detector/NODE_1/output8.0
+        // FilePath results = daemon.getResults(qid)
+        // File? compressedResults = zip(results)
+        // sendResults(qid, compressedResults)
+        File resultsDir = daemon.getResults();
+        try {
+			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
+			sendResults(zippedResultsDir);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		return "Query completed.";
+	}
+	
+	
+	@Path("/local") // TODO figure out the path for this
+	@POST
+	public String queryLocalFiles() {
+	/**
+	 * run a query using data already available to the client
+	 */
 		
+		
+		// TODO send results to server
+		// TODO on the server generate a query id if "local" is the qid included in the POST message
+		return "todo build this method.";
+	}
+	
+	public java.nio.file.Path packageResultDir(File resultsDir) throws IOException {
+		/**
+		 * Takes a directory and zips it into a new file.
+		 * Assume that the directory contains the SourcererCC result files.
+		 */
 
+		String zipPath = resultsDir.getParent();
+		File zipFile = new File(zipPath);
+		java.nio.file.Path zipTempFile = Files.createTempFile(zipFile.toPath(), "", ".zip");
+		pack(resultsDir.getPath(), zipTempFile);
+		return zipTempFile;
+	}
+	
+	// https://stackoverflow.com/questions/15968883/how-to-zip-a-folder-itself-using-java/32052016#32052016
+	public static void pack(String sourceDirPath, java.nio.file.Path zipFilePath) throws IOException {
+	    //java.nio.file.Path p = Files.createFile(Paths.get(zipFilePath));
+	    try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
+	        java.nio.file.Path pp = Paths.get(sourceDirPath);
+	        Files.walk(pp)
+	          .filter(path -> !Files.isDirectory(path))
+	          .forEach(path -> {
+	              ZipEntry zipEntry = new ZipEntry(pp.relativize(path).toString());
+	              try {
+	                  zs.putNextEntry(zipEntry);
+	                  zs.write(Files.readAllBytes(path));
+	                  zs.closeEntry();
+	            } catch (Exception e) {
+	                System.err.println(e);
+	            }
+	          });
+	    }
+	}
+	
+	public void sendResults(java.nio.file.Path zippedResults) {
+		
 	}
 }
