@@ -5,6 +5,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.grizzly2.servlet.GrizzlyWebContainerFactory;
@@ -13,17 +15,20 @@ import org.glassfish.jersey.server.ServerProperties;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import com.mondego.indexbased.Daemon;
+import com.mondego.indexbased.SearchManager;
 
 public class JerseyServer {
 	private static URI BASE_URI = URI.create("http://localhost:4568/");  // TODO should use theInstance.daemonPort
     public static String ROOT_PATH = "";
+    
+    private static final Logger logger = LogManager.getLogger(JerseyServer.class);
     
     public JerseyServer() {
     	// default configurations
     }
     
     public JerseyServer(String URL, int port) {
-    	this.BASE_URI = URI.create("http://" + URL + ":" + port);
+    	BASE_URI = URI.create("http://" + URL + ":" + port + "/");
     }
     
     /**
@@ -56,6 +61,7 @@ public class JerseyServer {
             theInstance.daemon.register();
             theInstance.daemon.start();
             theInstance.daemon_loaded = true;
+        	
         	*/
     		
     		
@@ -67,7 +73,7 @@ public class JerseyServer {
     		initParams.put(
     				"jersey.config.server.provider.classnames", 
     				"org.glassfish.jersey.media.multipart.MultiPartFeature");
-    		final HttpServer server = GrizzlyWebContainerFactory.create(BASE_URI, ServletContainer.class, initParams);
+    		HttpServer server = GrizzlyWebContainerFactory.create(BASE_URI, ServletContainer.class, initParams);
     		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
     			@Override
     			public void run() {
@@ -75,7 +81,7 @@ public class JerseyServer {
     			}
     		}));
 
-    		System.out.println(String.format("Application started.%nTry out %s%s%nStop the application using CTRL+C",
+    		logger.info(String.format("Application started.%nTry out %s%s%nStop the application using CTRL+C",
     				BASE_URI, ROOT_PATH));
 
     		Thread.currentThread().join();

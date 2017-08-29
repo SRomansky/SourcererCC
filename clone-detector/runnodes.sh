@@ -8,17 +8,18 @@ echo $rootPATH
 mode="${1:-search}"
 num_nodes="${2:-50}"
 threshold="${3:-8}"
+port="${4:-4568}" # ./runnodes.sh daemon 1 8 4569
 echo "*****************************************************"
 echo "running this script in $mode mode"
 echo "*****************************************************"
-
+echo "port is! $port"
 echo $num_nodes > $rootPATH/search_metadata.txt
 
 PIDS=""
 
 for i in $(seq 1 1 $num_nodes)
 do
-    java -Dproperties.rootDir="$rootPATH/" -Dproperties.location="$rootPATH/NODE_$i/sourcerer-cc.properties" -Dlog4j.configurationFile="$rootPATH/NODE_$i/log4j2.xml" -Xms8g -Xmx8g -XX:+UseCompressedOops -jar $rootPATH/dist/indexbased.SearchManager.jar $mode $threshold 
+    java -Dproperties.rootDir="$rootPATH/" -Dproperties.location="$rootPATH/NODE_$i/sourcerer-cc.properties" -Dlog4j.configurationFile="$rootPATH/NODE_$i/log4j2.xml" -Xms8g -Xmx8g -XX:+UseCompressedOops -jar $rootPATH/dist/indexbased.SearchManager.jar $mode $threshold $port
     PIDS+="$! "
 done
 echo $PIDS

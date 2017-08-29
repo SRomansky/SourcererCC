@@ -197,7 +197,7 @@ public class SearchManager {
         
         try {
         	if (args.length >= 3) {
-        		this.daemonPort = Integer.parseInt(args[2]);
+        		daemonPort = Integer.parseInt(args[2]);
         	}
         	else {
         		logger.warn("Failed to parse port numner. Using default port: " + this.daemonPort);
@@ -205,6 +205,7 @@ public class SearchManager {
         } catch (NumberFormatException e) {
         	logger.warn("Failed to parse port numner. Using default port: " + this.daemonPort);
         }
+        logger.info("got port: " + daemonPort);
     }
 
     private void createShards(boolean forWriting) {
@@ -455,7 +456,7 @@ public class SearchManager {
         	
         	// XXX Jersey stuff
         	// Base URI the Grizzly HTTP server will listen on
-        	theInstance.server = new JerseyServer(); // TODO default config
+        	theInstance.server = new JerseyServer("localhost", theInstance.daemonPort); // TODO default config
         	theInstance.server.run();
         	// XXX Jersey stuff
         }
