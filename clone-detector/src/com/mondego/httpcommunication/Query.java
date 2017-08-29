@@ -28,7 +28,10 @@ import javax.xml.bind.DatatypeConverter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.internal.util.collection.MultivaluedStringMap;
+import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.media.multipart.MultiPart;
@@ -125,7 +128,7 @@ public class Query {
         File resultsDir = daemon.getResults();
         try {
 			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
-			sendResults(zippedResultsDir);
+			sendResults(zippedResultsDir, qid);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -181,17 +184,34 @@ public class Query {
 	    }
 	}
 	
-	public void sendResults(java.nio.file.Path zippedResults) {
+	public void sendResults(java.nio.file.Path zippedResults, String queryId) {
 		ClientConfig clientConfig = new ClientConfig();
 		clientConfig.register(MultiPartFeature.class); 
 		
-		FileDataBodyPart filePart = new FileDataBodyPart("query_file", zippedResults.toFile());
+		FileDataBodyPart filePart = new FileDataBodyPart("results_file", zippedResults.toFile());
 
 		Client client = ClientBuilder.newClient(clientConfig);
     	WebTarget webTarget = client.target("http://localhost:4567/results");  // TODO dynamic
     	
+    	MultivaluedMap formData = new MultivaluedStringMap();
+    	formData.add("qid", queryId);
+    	
+    	FormDataContentDisposition cd = null;
+		try {
+			cd = new FormDataContentDisposition("form-data; name=\"meta_data\"");
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			System.out.println("A problem occurred.");
+			e.printStackTrace();
+		}
+    	
+    	BodyPart formBody = new BodyPart().entity(formData);
+    	formBody.setMediaType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+    	formBody.setContentDisposition(cd);
+    	
     	MultiPart entity = new FormDataMultiPart()
-    			.bodyPart(filePart);
+    			.bodyPart(filePart)
+    			.bodyPart(formBody);
     	
     	Response response = webTarget
     			.request()
