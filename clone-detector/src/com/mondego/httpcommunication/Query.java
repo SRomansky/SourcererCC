@@ -9,18 +9,31 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.glassfish.jersey.media.multipart.MultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 
 import com.mondego.indexbased.Daemon;
 import com.mondego.indexbased.SearchManager;
@@ -38,10 +51,17 @@ public class Query {
 	 */
 	@POST
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public String query(@FormDataParam("query_file") InputStream uploadedInputStream) {
+	public String query(
+			@FormDataParam("query_file") InputStream uploadedInputStream,
+			@FormDataParam("meta_data") FormDataBodyPart metaData
+			) {
 		/**
 		 * run a query on the client using files from the POST message
 		 */
+
+		MultivaluedMap metaDataMap = metaData.getValueAs(MultivaluedMap.class);
+		String qid = (String) ((java.util.LinkedList) metaDataMap.get("qid")).get(0);  // why
+
 		
 		File uploadDir = new File("query_sets");  // TODO refactor into daemon
 		uploadDir.mkdir();
@@ -61,6 +81,7 @@ public class Query {
 			e.printStackTrace();
 		}
 		System.out.println(shash);  // TODO log the hash? It could be useful for debugging?
+		System.out.println("Got query id: " + qid);
 		
 		/* unpack contents from manager into query directory */
 		// XXX check if querydir==datasetdir: log a warning if it is.
@@ -161,6 +182,19 @@ public class Query {
 	}
 	
 	public void sendResults(java.nio.file.Path zippedResults) {
+		ClientConfig clientConfig = new ClientConfig();
+		clientConfig.register(MultiPartFeature.class); 
 		
+		FileDataBodyPart filePart = new FileDataBodyPart("query_file", zippedResults.toFile());
+
+		Client client = ClientBuilder.newClient(clientConfig);
+    	WebTarget webTarget = client.target("http://localhost:4567/results");  // TODO dynamic
+    	
+    	MultiPart entity = new FormDataMultiPart()
+    			.bodyPart(filePart);
+    	
+    	Response response = webTarget
+    			.request()
+    			.post(Entity.entity(entity, MediaType.MULTIPART_FORM_DATA));
 	}
 }
