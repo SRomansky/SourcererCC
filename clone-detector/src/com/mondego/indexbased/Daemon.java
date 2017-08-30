@@ -121,9 +121,6 @@ public class Daemon {
                     logger.info("Query File: " + queryFile.getAbsolutePath());
                     String filename = queryFile.getName().replaceFirst("[.][^.]+$", "");
                     try {
-                    	// TODO make an output directory using a timestamp
-                    	// TODO figure out how these will be reported from the web service
-                    	
                         String cloneReportFileName = outputDir + "/" + filename + "clones_index_WITH_FILTER.txt";
                         
                         File cloneReportFile = new File(cloneReportFileName);
@@ -143,7 +140,6 @@ public class Daemon {
                         System.exit(1);
                     }
                     
-                    // TODO does this code need the while loop?
         			try {
         				TokensFileReader tfr = new TokensFileReader(SearchManager.NODE_PREFIX, queryFile,
         						SearchManager.max_tokens, queryFileProcessor);

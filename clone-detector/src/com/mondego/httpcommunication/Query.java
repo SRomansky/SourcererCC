@@ -94,19 +94,13 @@ public class Query {
 		System.out.println("Got query id: " + qid);
 		
 		/* unpack contents from manager into query directory */
-		// XXX check if querydir==datasetdir: log a warning if it is.
-		// unpack contents into querydir
-		// TODO generate a new querydir per query? or reuse the same querydir
 		
 		// TODO check if the daemon is busy in a query
 		// TODO if the daemon is busy there is a bug :)
 		// TODO (later) if the daemon is busy, send a POST with an error to results/{id} on the manager
 		
 		Daemon daemon = Daemon.getInstance();
-		/*
-		 * TODO delete the contents of querydir
-		 * TODO unpack the zip file to the querydir
-		 */
+
 		try {
 			FileUtils.cleanDirectory(new File(daemon.sm.QUERY_DIR_PATH));
 		} catch (IOException e1) {
@@ -127,28 +121,16 @@ public class Query {
 //		}
 		
 		
-		// TODO do something with the tempfile
-		//Path tempFile = daemon.getPostFile(uploadDir, req);
-		
 		// TODO wait until the daemon has started before running a query
-		// TODO save a copy of post data?
-		// TODO daemon will send a message to manager about results?
-		// TODO daemon will have a command to return the last results?
 		long timeStartSearch = System.nanoTime();
 		// Daemon.setState(running query);
 		daemon.query();
 		long estimatedTime = System.nanoTime() - timeStartSearch;
         logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
         logger.info("number of clone pairs detected: " + daemon.sm.clonePairsCount);  // TODO need to reset clonePairsCount after a run has been completed.
-        // TODO read the cleanup scripts and see what is deleted/recreated for each run.
-		// TODO store the query results?
-        // TODO report the query results?
         
         /* get the query results and send them to the manager */
         // XXX uses output dir from SCC like SourcererCC/clone-detector/NODE_1/output8.0
-        // FilePath results = daemon.getResults(qid)
-        // File? compressedResults = zip(results)
-        // sendResults(qid, compressedResults)
         File resultsDir = daemon.getResults();
         try {
 			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
@@ -168,9 +150,25 @@ public class Query {
 	/**
 	 * run a query using data already available to the client
 	 */
+		Daemon daemon = Daemon.getInstance();
+		long timeStartSearch = System.nanoTime();
+		// Daemon.setState(running query);
+		daemon.query();
+		long estimatedTime = System.nanoTime() - timeStartSearch;
+        logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
+        logger.info("number of clone pairs detected: " + daemon.sm.clonePairsCount);  // TODO need to reset clonePairsCount after a run has been completed.
+        
+        /* get the query results and send them to the manager */
+        // XXX uses output dir from SCC like SourcererCC/clone-detector/NODE_1/output8.0
+        File resultsDir = daemon.getResults();
+        try {
+			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
+			sendResults(zippedResultsDir, "local");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
-		
-		// TODO send results to server
 		// TODO on the server generate a query id if "local" is the qid included in the POST message
 		return "todo build this method.";
 	}
