@@ -1,6 +1,8 @@
 package com.mondego.httpcommunication;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +13,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import javax.ws.rs.Consumes;
@@ -25,6 +28,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.DatatypeConverter;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
@@ -60,6 +64,9 @@ public class Query {
 			) {
 		/**
 		 * run a query on the client using files from the POST message
+		 * 
+		 * side-effect: delete everything in daemon.sm.QUERY_DIR_PATH
+		 * side-effect: puts new files into daemon.sm.QUERY_DIR_PATH
 		 */
 
 		MultivaluedMap metaDataMap = metaData.getValueAs(MultivaluedMap.class);
@@ -95,13 +102,30 @@ public class Query {
 		// TODO if the daemon is busy there is a bug :)
 		// TODO (later) if the daemon is busy, send a POST with an error to results/{id} on the manager
 		
+		Daemon daemon = Daemon.getInstance();
+		/*
+		 * TODO delete the contents of querydir
+		 * TODO unpack the zip file to the querydir
+		 */
+		try {
+			FileUtils.cleanDirectory(new File(daemon.sm.QUERY_DIR_PATH));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			unzip(tempFile.toString(), daemon.sm.QUERY_DIR_PATH);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		
 		/* run the query */
 		// TODO check if daemon status is loaded
 //		if (!theInstance.daemon_loaded) {
 //			return "daemon is still initializing.";
 //		}
-		Daemon daemon = Daemon.getInstance();
+		
 		
 		// TODO do something with the tempfile
 		//Path tempFile = daemon.getPostFile(uploadDir, req);
@@ -183,6 +207,54 @@ public class Query {
 	          });
 	    }
 	}
+	
+	// code from: http://www.codejava.net/java-se/file-io/programmatically-extract-a-zip-file-using-java
+    private static final int BUFFER_SIZE = 4096;
+    /**
+     * Extracts a zip file specified by the zipFilePath to a directory specified by
+     * destDirectory (will be created if does not exists)
+     * @param zipFilePath
+     * @param destDirectory
+     * @throws IOException
+     */
+    public void unzip(String zipFilePath, String destDirectory) throws IOException {
+        File destDir = new File(destDirectory);
+        if (!destDir.exists()) {
+            destDir.mkdir();
+        }
+        ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zipFilePath));
+        ZipEntry entry = zipIn.getNextEntry();
+        // iterates over entries in the zip file
+        while (entry != null) {
+            String filePath = destDirectory + File.separator + entry.getName();
+            if (!entry.isDirectory()) {
+                // if the entry is a file, extracts it
+                extractFile(zipIn, filePath);
+            } else {
+                // if the entry is a directory, make the directory
+                File dir = new File(filePath);
+                dir.mkdir();
+            }
+            zipIn.closeEntry();
+            entry = zipIn.getNextEntry();
+        }
+        zipIn.close();
+    }
+    /**
+     * Extracts a zip entry (file entry)
+     * @param zipIn
+     * @param filePath
+     * @throws IOException
+     */
+    private void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
+        byte[] bytesIn = new byte[BUFFER_SIZE];
+        int read = 0;
+        while ((read = zipIn.read(bytesIn)) != -1) {
+            bos.write(bytesIn, 0, read);
+        }
+        bos.close();
+    }
 	
 	public void sendResults(java.nio.file.Path zippedResults, String queryId) {
 		ClientConfig clientConfig = new ClientConfig();

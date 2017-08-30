@@ -15,7 +15,7 @@ n=0
 
 repo=`pwd`'/SourcererCC'
 dataset_dir=`pwd`'/../clone-detector/input/dataset'
-queryset_dir=`pwd`'/../clone-detector/input/dataset'
+queryset_dir=`pwd`'/../clone-detector/query/dataset'
 output_dir=`pwd`'/../clone-detector/NODE_1'
 docker build -t local-scc .
 for i in $(seq 1 1 6)
