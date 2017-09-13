@@ -453,7 +453,9 @@ public class SearchManager {
             WordFrequencyStore wfs = new WordFrequencyStore();
             wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
         } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
-        	String ip = InetAddress.getLocalHost().getHostAddress();  // TODO this might be the wrong ip
+        	//String ip = InetAddress.getLocalHost().getHostAddress();  // TODO this might be the wrong ip // It is wrong :(
+        	String ip = "127.0.0.1";
+        	
         	theInstance.daemon = new Daemon(theInstance, ip, theInstance.daemonPort); // builds global daemon.
         	
         	// XXX Jersey stuff
