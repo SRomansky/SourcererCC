@@ -49,6 +49,13 @@ import com.mondego.indexbased.SearchManager;
 public class Query {
 	private static final Logger logger = LogManager.getLogger(Query.class);
 	
+	private String getFileHash(java.nio.file.Path filePath) throws IOException, NoSuchAlgorithmException {
+		byte[] b = Files.readAllBytes(filePath);
+        byte[] hash = MessageDigest.getInstance("SHA-256").digest(b);
+        String shash = DatatypeConverter.printHexBinary(hash);
+		return shash;
+	}
+	
 	/**
 	 * accept a zip file of query data from whomever and run a
 	 * clone detection query with the data.
@@ -163,7 +170,7 @@ public class Query {
         File resultsDir = daemon.getResults();
         try {
 			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
-			sendResults(zippedResultsDir, "local");
+			sendResults(zippedResultsDir, "local");  // TODO qid should be sha-256 of the query content zip file. It is not guaranteed that the zip file will exist/be identifiable from this location.
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
