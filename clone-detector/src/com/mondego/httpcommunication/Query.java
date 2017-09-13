@@ -90,9 +90,7 @@ public class Query {
 			tempFile = Files.createTempFile(uploadDir.toPath(), "", ".zip");
 			Files.copy(uploadedInputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
 			
-			byte[] b = Files.readAllBytes(tempFile);
-	        byte[] hash = MessageDigest.getInstance("MD5").digest(b);
-	        shash = DatatypeConverter.printHexBinary(hash);
+	        shash = getFileHash(tempFile);
 		} catch (IOException | NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -141,7 +139,7 @@ public class Query {
         File resultsDir = daemon.getResults();
         try {
 			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
-			sendResults(zippedResultsDir, qid);
+			sendResults(zippedResultsDir, qid, daemon.dataset_id);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -170,7 +168,7 @@ public class Query {
         File resultsDir = daemon.getResults();
         try {
 			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
-			sendResults(zippedResultsDir, "local");  // TODO qid should be sha-256 of the query content zip file. It is not guaranteed that the zip file will exist/be identifiable from this location.
+			sendResults(zippedResultsDir, "local", daemon.dataset_id);  // TODO qid should be sha-256 of the query content zip file. It is not guaranteed that the zip file will exist/be identifiable from this location.
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -261,7 +259,7 @@ public class Query {
         bos.close();
     }
 	
-	public void sendResults(java.nio.file.Path zippedResults, String queryId) {
+	public void sendResults(java.nio.file.Path zippedResults, String queryId, String datasetId) {
 		ClientConfig clientConfig = new ClientConfig();
 		clientConfig.register(MultiPartFeature.class); 
 		
@@ -272,6 +270,7 @@ public class Query {
     	
     	MultivaluedMap formData = new MultivaluedStringMap();
     	formData.add("qid", queryId);
+    	formData.add("datasetId", datasetId);
     	
     	FormDataContentDisposition cd = null;
 		try {

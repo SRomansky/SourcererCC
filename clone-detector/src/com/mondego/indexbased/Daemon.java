@@ -1,10 +1,12 @@
 package com.mondego.indexbased;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.SequenceInputStream;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
@@ -15,12 +17,17 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Vector;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
 import javax.xml.bind.DatatypeConverter;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,6 +46,26 @@ public class Daemon {
 	public static String ip = "";
 	public static int port = 0;
 	public static String outputDir = null;
+	public static String dataset_id = null; // In INIT this variable is set to the SHA-256 of the dataset.
+	
+	public enum State {
+		/**
+		 * BUSY - running query
+		 * IDLE - waiting for query
+		 * INIT - initializing, loading the dataset into memory
+		 */
+		BUSY, IDLE, INIT
+	}
+	
+	private static State state = State.INIT; // TODO do semaphores need to be used to access and modify the state?
+	
+	private void setState(State newState) {
+		state = newState;
+	}
+	
+	public State getState() {
+		return state;
+	}
 	
 	public static Daemon getInstance() {
 		if (daemon == null) {
@@ -55,12 +82,70 @@ public class Daemon {
 		daemon = this;
 	}
 	
+	private String calculateDatasetId() {
+		// based on https://stackoverflow.com/questions/3010071/how-to-calculate-md5-checksum-on-directory-with-java-or-groovy/15503271#15503271
+		File datasetDir = new File(SearchManager.DATASET_DIR);
+		
+		assert (datasetDir.isDirectory());
+	    Vector<FileInputStream> fileStreams = new Vector<FileInputStream>();
+
+	    System.out.println("Found files for hashing:");
+	    collectInputStreams(datasetDir, fileStreams, false);
+
+	    SequenceInputStream seqStream = 
+	            new SequenceInputStream(fileStreams.elements());
+
+	    try {
+	        String sha256Hash = DigestUtils.sha256Hex(seqStream);
+	        seqStream.close();
+	        return sha256Hash;
+	    }
+	    catch (IOException e) {
+	        throw new RuntimeException("Error reading files to hash in "
+	                                   + datasetDir.getAbsolutePath(), e);
+	    }
+	}
+	
+	private void collectInputStreams(File dir,
+			List<FileInputStream> foundStreams,
+			boolean includeHiddenFiles) {
+
+		File[] fileList = dir.listFiles();        
+		Arrays.sort(fileList,               // Need in reproducible order
+				new Comparator<File>() {
+			public int compare(File f1, File f2) {                       
+				return f1.getName().compareTo(f2.getName());
+			}
+		});
+
+		for (File f : fileList) {
+			if (!includeHiddenFiles && f.getName().startsWith(".")) {
+				// Skip it
+			}
+			else if (f.isDirectory()) {
+				collectInputStreams(f, foundStreams, includeHiddenFiles);
+			}
+			else {
+				try {
+					System.out.println("\t" + f.getAbsolutePath());
+					foundStreams.add(new FileInputStream(f));
+				}
+				catch (FileNotFoundException e) {
+					throw new AssertionError(e.getMessage()
+							+ ": file should never not be found!");
+				}
+			}
+		}
+	}
+	
 	public void start() {
     	/*
     	 * Start the daemon and load the dataset into memory if it exists.
     	 */
     	// TODO register the ip address and port number of this process with the manager service
     	// TODO if the daemon is restarted, or the dataset needs to be reloaded, the invertedIndex and documentsForII need to be cleared.
+    	setState(State.INIT);
+    	dataset_id = calculateDatasetId();
     	
     	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
         File datasetDir = new File(SearchManager.DATASET_DIR);
@@ -95,11 +180,13 @@ public class Daemon {
             logger.error("File: " + datasetDir.getName() + " is not a directory. Exiting now");
             System.exit(1);
         }
+        setState(State.IDLE);
 	}
     
     public void query() {
     	// TODO prevent multiple queries at the same time?
     	// start queue processors
+    	setState(State.BUSY);
     	sm.completedQueries = new HashSet<Long>();
 
         sm.startQueryThreads();
@@ -163,6 +250,7 @@ public class Daemon {
             System.exit(1);
         }
         sm.stopQueryThreads();
+        setState(State.IDLE);
 	}
     
     public Path getPostFile(File uploadDirectory, Request req) {
@@ -207,8 +295,9 @@ public class Daemon {
 		 * 
 		 * This method sends a POST to sm.managerURL:sm.managerPort
 		 */
-
+		setState(State.BUSY);
 		Register.sendRegistration();
+		setState(State.IDLE);
 	}
 	
 	public File getResults() {
