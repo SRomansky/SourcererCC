@@ -265,6 +265,10 @@ public class Query {
 		
 		FileDataBodyPart filePart = new FileDataBodyPart("results_file", zippedResults.toFile());
 
+		
+		FileDataBodyPart headerFilePart = new FileDataBodyPart("header_file", new File(SearchManager.headerFilePath));
+		FileDataBodyPart licenseFilePart = new FileDataBodyPart("license_file", new File(SearchManager.licenseFilePath));
+		
 		Client client = ClientBuilder.newClient(clientConfig);
     	WebTarget webTarget = client.target("http://localhost:4567/results");  // TODO dynamic
     	
@@ -287,6 +291,8 @@ public class Query {
     	
     	MultiPart entity = new FormDataMultiPart()
     			.bodyPart(filePart)
+    			.bodyPart(headerFilePart)
+    			.bodyPart(licenseFilePart)
     			.bodyPart(formBody);
     	
     	Response response = webTarget

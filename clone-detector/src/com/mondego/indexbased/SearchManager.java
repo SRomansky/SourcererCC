@@ -159,6 +159,9 @@ public class SearchManager {
     public int daemonPort = 4568;
 	public String managerURL = "localhost";
 	public int managerPort = 4567;
+	
+	public static String licenseFilePath = null;
+	public static String headerFilePath = null;
     
     public SearchManager(String[] args) throws IOException {
     	this.resetQueryCounters();
@@ -181,7 +184,7 @@ public class SearchManager {
             this.threadToProcessIIQueue = Integer.parseInt(properties.getProperty("BTIIQ_THREADS", "1"));
             this.threadsToProcessFIQueue = Integer.parseInt(properties.getProperty("BTFIQ_THREADS", "1"));
             this.isSharding = Boolean.parseBoolean(properties.getProperty("IS_SHARDING"));
-
+            
         } catch (NumberFormatException e) {
             logger.error(e.getMessage() + ", exiting now", e);
             System.exit(1);
@@ -392,6 +395,11 @@ public class SearchManager {
             logger.debug("Query path:" + SearchManager.QUERY_DIR_PATH);
             SearchManager.LOG_PROCESSED_LINENUMBER_AFTER_X_LINES = Integer
                     .parseInt(properties.getProperty("LOG_PROCESSED_LINENUMBER_AFTER_X_LINES", "1000"));
+            SearchManager.licenseFilePath = properties.getProperty("DATASET_LICENSE_FILE_PATH");
+            SearchManager.headerFilePath = properties.getProperty("DATASET_HEADER_FILE_PATH");
+            System.out.println("header path: " + SearchManager.headerFilePath);
+            System.out.println(properties.getProperty("DATASET_HEADER_FILE_PATH"));
+
             theInstance = new SearchManager(args);
             String shardsOrder = properties.getProperty("METRICS_ORDER_IN_SHARDS");
             SearchManager.METRICS_ORDER_IN_SHARDS = new ArrayList<String>();
