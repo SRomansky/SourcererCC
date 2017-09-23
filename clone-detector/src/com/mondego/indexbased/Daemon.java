@@ -328,7 +328,52 @@ public class Daemon {
 		loadCsvFileToMap(Paths.get(queryLicenseFilePath), queryLicenseMap);
 		loadCsvFileToMap(Paths.get(datasetHeaderFilePath), datasetHeaderMap);
 		loadCsvFileToMap(Paths.get(datasetLicenseFilePath), datasetLicenseMap);
-		return null;
+		
+		String report = "";
+		try {
+			File dir = new File(outputDir);
+			File[] directoryListing = dir.listFiles();
+			if (directoryListing != null) {
+				for (File file : directoryListing) {
+					if (file.isFile()) {
+						// read the file
+						BufferedReader bufferedReader;
+
+						bufferedReader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8);
+
+						String line = bufferedReader.readLine();
+						while(line != null){
+							String[] components = line.split(",");
+							int qpid = 0;
+							int qbid = 1;
+							int dpid = 2;
+							int dbid = 3;
+
+							String rowContent = wrap(components[dpid]) + wrap(components[dbid]) + wrap(components[qpid]) + wrap(components[qbid]) +
+									wrap(datasetHeaderMap.get(components[dpid])) +
+									wrap(datasetLicenseMap.get(components[dpid])) +
+									wrap(queryHeaderMap.get(components[qpid])) +
+									wrap(queryLicenseMap.get(components[qpid]));
+							String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
+							report = report.concat(row);
+
+							line = bufferedReader.readLine();
+						}
+						bufferedReader.close();
+					}
+					else {
+						logger.error("Found unexpected folder in results directory.");
+					}
+				}
+			} else {
+				logger.error("The results directory doesn't seem to exist.");
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return report;
 	}
 	
 	public String theCsvToDataStructureFunction() {
@@ -352,50 +397,51 @@ public class Daemon {
 //		System.out.println("Got query id: " + qid);
 //		System.out.println("Got datasetId: " + datasetId);
 		
-		try {
-			// tempFile is supposed to be a zip file of the results from the client.
-			// The results folder contains multiple files from clone detection
-			// The loop goes through each file and converts them into html table rows.
-			ZipFile zipFile = new ZipFile(tempFile.toString());  // XXX The results have format: dataset_pid, dataset_bid, queryset_pid, queryset_bid
-
-			Enumeration<? extends ZipEntry> entries = zipFile.entries();
-
-			while(entries.hasMoreElements()) {
-				ZipEntry zipEntry = entries.nextElement();
-				System.out.println(zipEntry.getName());
-				BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)));
-				String line = bufferedReader.readLine();
-				while(line != null){
-//					System.out.println("here: " + line);
-					String[] components = line.split(",");
-					int qpid = 0;
-					int qbid = 1;
-					int dpid = 2;
-					int dbid = 3;
-					
-					String rowContent = wrap(components[dpid]) + wrap(components[dbid]) + wrap(components[qpid]) + wrap(components[qbid]) +
-							wrap(SccManager.getInstance().datasetHeaderMap.get(components[dpid])) +
-							wrap(SccManager.getInstance().datasetLicenseMap.get(components[dpid])) +
-							wrap(SccManager.getInstance().headerMap.get(components[qpid])) +
-							wrap(SccManager.getInstance().licenseMap.get(components[qpid]));
-					String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
-					results = results.concat(row);
-					
-					line = bufferedReader.readLine();
-				}
-				bufferedReader.close();
-				
-				// XXX method that outputs a table
-//				InputStream is = zipFile.getInputStream(zipEntry);
-//				String cssclass = "none";
-//				CSVToTable csvtotable = new CSVToTable( is, ',', '\"', "#", CSV.UTF8, cssclass );
-//				results = results.concat(csvtotable.table); // TODO add some sort of label to indicate the difference between files. e.g. each iteration of this loop is a different file being parsed. So, should there be a label for each file in the output of the table generator?
-			}
-			zipFile.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			// tempFile is supposed to be a zip file of the results from the client.
+//			// The results folder contains multiple files from clone detection
+//			// The loop goes through each file and converts them into html table rows.
+//			ZipFile zipFile = new ZipFile(tempFile.toString());  // XXX The results have format: dataset_pid, dataset_bid, queryset_pid, queryset_bid
+//
+//			Enumeration<? extends ZipEntry> entries = zipFile.entries();
+//
+//			while(entries.hasMoreElements()) {
+//				ZipEntry zipEntry = entries.nextElement();
+//				System.out.println(zipEntry.getName());
+//				BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)));
+//				String line = bufferedReader.readLine();
+//				while(line != null){
+////					System.out.println("here: " + line);
+//					String[] components = line.split(",");
+//					int qpid = 0;
+//					int qbid = 1;
+//					int dpid = 2;
+//					int dbid = 3;
+//					
+//					String rowContent = wrap(components[dpid]) + wrap(components[dbid]) + wrap(components[qpid]) + wrap(components[qbid]) +
+//							wrap(SccManager.getInstance().datasetHeaderMap.get(components[dpid])) +
+//							wrap(SccManager.getInstance().datasetLicenseMap.get(components[dpid])) +
+//							wrap(SccManager.getInstance().headerMap.get(components[qpid])) +
+//							wrap(SccManager.getInstance().licenseMap.get(components[qpid]));
+//					String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
+//					results = results.concat(row);
+//					
+//					line = bufferedReader.readLine();
+//				}
+//				bufferedReader.close();
+//				
+//				// XXX method that outputs a table
+////				InputStream is = zipFile.getInputStream(zipEntry);
+////				String cssclass = "none";
+////				CSVToTable csvtotable = new CSVToTable( is, ',', '\"', "#", CSV.UTF8, cssclass );
+////				results = results.concat(csvtotable.table); // TODO add some sort of label to indicate the difference between files. e.g. each iteration of this loop is a different file being parsed. So, should there be a label for each file in the output of the table generator?
+//			}
+//			zipFile.close();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		return "";
 
 	}
 	

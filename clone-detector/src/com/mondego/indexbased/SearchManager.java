@@ -399,7 +399,7 @@ public class SearchManager {
                     .parseInt(properties.getProperty("LOG_PROCESSED_LINENUMBER_AFTER_X_LINES", "1000"));
             SearchManager.datasetLicenseFilePath = properties.getProperty("DATASET_LICENSE_FILE_PATH");
             SearchManager.datasetHeaderFilePath = properties.getProperty("DATASET_HEADER_FILE_PATH");
-            SearchManager.queryHeaderFilePath = properties.getProperty("QUERY_LICENSE_FILE_PATH");
+            SearchManager.queryHeaderFilePath = properties.getProperty("QUERY_HEADER_FILE_PATH");
             SearchManager.queryLicenseFilePath = properties.getProperty("QUERY_LICENSE_FILE_PATH");
 
             theInstance = new SearchManager(args);

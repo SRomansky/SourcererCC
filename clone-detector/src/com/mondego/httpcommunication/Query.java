@@ -102,12 +102,12 @@ public class Query {
 		
 		try {
 			java.nio.file.Path queryHeaderPath = Paths.get(SearchManager.queryHeaderFilePath);
-			Files.delete(queryHeaderPath);
+			Files.deleteIfExists(queryHeaderPath);
 			Files.createFile(queryHeaderPath);  // TODO check if file attributes are needed...
 			Files.copy(headerInputStream, queryHeaderPath, StandardCopyOption.REPLACE_EXISTING);
 			
 			java.nio.file.Path queryLicensePath = Paths.get(SearchManager.queryLicenseFilePath);
-			Files.delete(queryLicensePath);
+			Files.deleteIfExists(queryLicensePath);
 			Files.createFile(queryLicensePath);  // TODO check if file attributes are needed...
 			Files.copy(licenseInputStream, queryLicensePath, StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
@@ -160,13 +160,9 @@ public class Query {
         		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, 
         		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath
         		);
-        try {
-			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
-			sendResults(zippedResultsDir, qid, daemon.dataset_id);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
+//			sendResults(zippedResultsDir, qid, daemon.dataset_id);
+			sendResults(report, qid, daemon.dataset_id);
 		
 		return "Query completed.";
 	}
@@ -189,13 +185,13 @@ public class Query {
         /* get the query results and send them to the manager */
         // XXX uses output dir from SCC like SourcererCC/clone-detector/NODE_1/output8.0
         File resultsDir = daemon.getResults();
-        try {
-			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
-			sendResults(zippedResultsDir, "local", daemon.dataset_id);  // TODO qid should be sha-256 of the query content zip file. It is not guaranteed that the zip file will exist/be identifiable from this location.
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        String report = daemon.generateReport(
+        		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, 
+        		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath
+        		);
+//			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
+			sendResults(report, "local", daemon.dataset_id);  // TODO qid should be sha-256 of the query content zip file. It is not guaranteed that the zip file will exist/be identifiable from this location.
+		
 		
 		// TODO on the server generate a query id if "local" is the qid included in the POST message
 		return "todo build this method.";
@@ -282,20 +278,17 @@ public class Query {
         bos.close();
     }
 	
-	public void sendResults(java.nio.file.Path zippedResults, String queryId, String datasetId) {
+	public void sendResults(String report, String queryId, String datasetId) {
 		ClientConfig clientConfig = new ClientConfig();
 		clientConfig.register(MultiPartFeature.class); 
 		
-		FileDataBodyPart filePart = new FileDataBodyPart("results_file", zippedResults.toFile());
-
-		
-		FileDataBodyPart headerFilePart = new FileDataBodyPart("header_file", new File(SearchManager.datasetHeaderFilePath));
-		FileDataBodyPart licenseFilePart = new FileDataBodyPart("license_file", new File(SearchManager.datasetLicenseFilePath));
+//		FileDataBodyPart filePart = new FileDataBodyPart("results_file", zippedResults.toFile());
 		
 		Client client = ClientBuilder.newClient(clientConfig);
     	WebTarget webTarget = client.target("http://localhost:4567/results");  // TODO dynamic
     	
     	MultivaluedMap formData = new MultivaluedStringMap();
+    	formData.add("report", report);
     	formData.add("qid", queryId);
     	formData.add("datasetId", datasetId);
     	
@@ -313,9 +306,7 @@ public class Query {
     	formBody.setContentDisposition(cd);
     	
     	MultiPart entity = new FormDataMultiPart()
-    			.bodyPart(filePart)
-    			.bodyPart(headerFilePart)
-    			.bodyPart(licenseFilePart)
+//    			.bodyPart(filePart)
     			.bodyPart(formBody);
     	
     	Response response = webTarget
