@@ -157,8 +157,6 @@ public class Daemon {
     	/*
     	 * Start the daemon and load the dataset into memory if it exists.
     	 */
-    	// TODO register the ip address and port number of this process with the manager service
-    	// TODO if the daemon is restarted, or the dataset needs to be reloaded, the invertedIndex and documentsForII need to be cleared.
     	setState(State.INIT);
     	dataset_id = calculateDatasetId();
     	
@@ -323,7 +321,6 @@ public class Daemon {
 
 	public String generateReport(String queryHeaderFilePath, String queryLicenseFilePath, String datasetHeaderFilePath,
 			String datasetLicenseFilePath) {
-		// TODO Auto-generated method stub
 		loadCsvFileToMap(Paths.get(queryHeaderFilePath), queryHeaderMap);
 		loadCsvFileToMap(Paths.get(queryLicenseFilePath), queryLicenseMap);
 		loadCsvFileToMap(Paths.get(datasetHeaderFilePath), datasetHeaderMap);
@@ -369,80 +366,10 @@ public class Daemon {
 				logger.error("The results directory doesn't seem to exist.");
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		return report;
-	}
-	
-	public String theCsvToDataStructureFunction() {
-		
-		// XXX The old code to generate the tempFile from the POST contents.
-//		/* read contents from manager */
-//		java.nio.file.Path tempFile = null;
-//		String shash = "";
-//		try {
-//			tempFile = Files.createTempFile(uploadDir.toPath(), "", ".zip");
-//			Files.copy(uploadedInputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
-//			
-//			byte[] b = Files.readAllBytes(tempFile);
-//	        byte[] hash = MessageDigest.getInstance("MD5").digest(b);
-//	        shash = DatatypeConverter.printHexBinary(hash);
-//		} catch (IOException | NoSuchAlgorithmException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		System.out.println(shash);  // TODO log the hash? It could be useful for debugging?
-//		System.out.println("Got query id: " + qid);
-//		System.out.println("Got datasetId: " + datasetId);
-		
-//		try {
-//			// tempFile is supposed to be a zip file of the results from the client.
-//			// The results folder contains multiple files from clone detection
-//			// The loop goes through each file and converts them into html table rows.
-//			ZipFile zipFile = new ZipFile(tempFile.toString());  // XXX The results have format: dataset_pid, dataset_bid, queryset_pid, queryset_bid
-//
-//			Enumeration<? extends ZipEntry> entries = zipFile.entries();
-//
-//			while(entries.hasMoreElements()) {
-//				ZipEntry zipEntry = entries.nextElement();
-//				System.out.println(zipEntry.getName());
-//				BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)));
-//				String line = bufferedReader.readLine();
-//				while(line != null){
-////					System.out.println("here: " + line);
-//					String[] components = line.split(",");
-//					int qpid = 0;
-//					int qbid = 1;
-//					int dpid = 2;
-//					int dbid = 3;
-//					
-//					String rowContent = wrap(components[dpid]) + wrap(components[dbid]) + wrap(components[qpid]) + wrap(components[qbid]) +
-//							wrap(SccManager.getInstance().datasetHeaderMap.get(components[dpid])) +
-//							wrap(SccManager.getInstance().datasetLicenseMap.get(components[dpid])) +
-//							wrap(SccManager.getInstance().headerMap.get(components[qpid])) +
-//							wrap(SccManager.getInstance().licenseMap.get(components[qpid]));
-//					String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
-//					results = results.concat(row);
-//					
-//					line = bufferedReader.readLine();
-//				}
-//				bufferedReader.close();
-//				
-//				// XXX method that outputs a table
-////				InputStream is = zipFile.getInputStream(zipEntry);
-////				String cssclass = "none";
-////				CSVToTable csvtotable = new CSVToTable( is, ',', '\"', "#", CSV.UTF8, cssclass );
-////				results = results.concat(csvtotable.table); // TODO add some sort of label to indicate the difference between files. e.g. each iteration of this loop is a different file being parsed. So, should there be a label for each file in the output of the table generator?
-//			}
-//			zipFile.close();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		return "";
-
 	}
 	
 	public void loadCsvFileToMap(Path csvFile, HashMap<String, String> map) {
@@ -469,7 +396,6 @@ public class Daemon {
 				line = br.readLine();
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -114,9 +114,6 @@ public class Query {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-//		SccManager.getInstance().loadHeaderFile(headerTempFile);
-//		SccManager.getInstance().loadLicenseFile(licenseTempFile);
-		
 		/* unpack contents from manager into query directory */
 		
 		// TODO check if the daemon is busy in a query
@@ -160,9 +157,7 @@ public class Query {
         		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, 
         		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath
         		);
-//			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
-//			sendResults(zippedResultsDir, qid, daemon.dataset_id);
-			sendResults(report, qid, daemon.dataset_id);
+        sendResults(report, qid, daemon.dataset_id);
 		
 		return "Query completed.";
 	}
@@ -189,8 +184,7 @@ public class Query {
         		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, 
         		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath
         		);
-//			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
-			sendResults(report, "local", daemon.dataset_id);  // TODO qid should be sha-256 of the query content zip file. It is not guaranteed that the zip file will exist/be identifiable from this location.
+        sendResults(report, "local", daemon.dataset_id);  // TODO qid should be sha-256 of the query content zip file. It is not guaranteed that the zip file will exist/be identifiable from this location.
 		
 		
 		// TODO on the server generate a query id if "local" is the qid included in the POST message
@@ -282,8 +276,6 @@ public class Query {
 		ClientConfig clientConfig = new ClientConfig();
 		clientConfig.register(MultiPartFeature.class); 
 		
-//		FileDataBodyPart filePart = new FileDataBodyPart("results_file", zippedResults.toFile());
-		
 		Client client = ClientBuilder.newClient(clientConfig);
     	WebTarget webTarget = client.target("http://localhost:4567/results");  // TODO dynamic
     	
@@ -306,7 +298,6 @@ public class Query {
     	formBody.setContentDisposition(cd);
     	
     	MultiPart entity = new FormDataMultiPart()
-//    			.bodyPart(filePart)
     			.bodyPart(formBody);
     	
     	Response response = webTarget
