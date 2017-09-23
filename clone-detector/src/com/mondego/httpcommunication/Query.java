@@ -67,6 +67,8 @@ public class Query {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public String query(
 			@FormDataParam("query_file") InputStream uploadedInputStream,
+			@FormDataParam("header_file") InputStream headerInputStream,
+			@FormDataParam("license_file") InputStream licenseInputStream,
 			@FormDataParam("meta_data") FormDataBodyPart metaData
 			) {
 		/**
@@ -97,6 +99,23 @@ public class Query {
 		}
 		System.out.println(shash);  // TODO log the hash? It could be useful for debugging?
 		System.out.println("Got query id: " + qid);
+		
+		try {
+			java.nio.file.Path queryHeaderPath = Paths.get(SearchManager.queryHeaderFilePath);
+			Files.delete(queryHeaderPath);
+			Files.createFile(queryHeaderPath);  // TODO check if file attributes are needed...
+			Files.copy(headerInputStream, queryHeaderPath, StandardCopyOption.REPLACE_EXISTING);
+			
+			java.nio.file.Path queryLicensePath = Paths.get(SearchManager.queryLicenseFilePath);
+			Files.delete(queryLicensePath);
+			Files.createFile(queryLicensePath);  // TODO check if file attributes are needed...
+			Files.copy(licenseInputStream, queryLicensePath, StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+//		SccManager.getInstance().loadHeaderFile(headerTempFile);
+//		SccManager.getInstance().loadLicenseFile(licenseTempFile);
 		
 		/* unpack contents from manager into query directory */
 		
@@ -137,6 +156,10 @@ public class Query {
         /* get the query results and send them to the manager */
         // XXX uses output dir from SCC like SourcererCC/clone-detector/NODE_1/output8.0
         File resultsDir = daemon.getResults();
+        String report = daemon.generateReport(
+        		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, 
+        		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath
+        		);
         try {
 			java.nio.file.Path zippedResultsDir = packageResultDir(resultsDir);
 			sendResults(zippedResultsDir, qid, daemon.dataset_id);
@@ -266,8 +289,8 @@ public class Query {
 		FileDataBodyPart filePart = new FileDataBodyPart("results_file", zippedResults.toFile());
 
 		
-		FileDataBodyPart headerFilePart = new FileDataBodyPart("header_file", new File(SearchManager.headerFilePath));
-		FileDataBodyPart licenseFilePart = new FileDataBodyPart("license_file", new File(SearchManager.licenseFilePath));
+		FileDataBodyPart headerFilePart = new FileDataBodyPart("header_file", new File(SearchManager.datasetHeaderFilePath));
+		FileDataBodyPart licenseFilePart = new FileDataBodyPart("license_file", new File(SearchManager.datasetLicenseFilePath));
 		
 		Client client = ClientBuilder.newClient(clientConfig);
     	WebTarget webTarget = client.target("http://localhost:4567/results");  // TODO dynamic

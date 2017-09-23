@@ -1,16 +1,19 @@
 package com.mondego.indexbased;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.SequenceInputStream;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -19,9 +22,13 @@ import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Vector;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
@@ -47,6 +54,13 @@ public class Daemon {
 	public static int port = 0;
 	public static String outputDir = null;
 	public static String dataset_id = null; // In INIT this variable is set to the SHA-256 of the dataset.
+	
+	HashMap<String, String> headerMap = new HashMap<String, String>();
+	HashMap<String, String> licenseMap = new HashMap<String, String>();
+	
+	HashMap<String, String> datasetHeaderMap = new HashMap<String, String>();
+	HashMap<String, String> datasetLicenseMap = new HashMap<String, String>();
+
 	
 	public enum State {
 		/**
@@ -304,5 +318,164 @@ public class Daemon {
 		//File resultsPath = new File(SearchManager.OUTPUT_DIR_TH);
 		File resultsPath = new File(outputDir);
 		return resultsPath;
+	}
+
+	public String generateReport(String queryHeaderFilePath, String queryLicenseFilePath, String datasetHeaderFilePath,
+			String datasetLicenseFilePath) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	public String theCsvToDataStructureFunction() {
+		
+		// XXX The old code to generate the tempFile from the POST contents.
+//		/* read contents from manager */
+//		java.nio.file.Path tempFile = null;
+//		String shash = "";
+//		try {
+//			tempFile = Files.createTempFile(uploadDir.toPath(), "", ".zip");
+//			Files.copy(uploadedInputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+//			
+//			byte[] b = Files.readAllBytes(tempFile);
+//	        byte[] hash = MessageDigest.getInstance("MD5").digest(b);
+//	        shash = DatatypeConverter.printHexBinary(hash);
+//		} catch (IOException | NoSuchAlgorithmException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		System.out.println(shash);  // TODO log the hash? It could be useful for debugging?
+//		System.out.println("Got query id: " + qid);
+//		System.out.println("Got datasetId: " + datasetId);
+		
+		try {
+			// tempFile is supposed to be a zip file of the results from the client.
+			// The results folder contains multiple files from clone detection
+			// The loop goes through each file and converts them into html table rows.
+			ZipFile zipFile = new ZipFile(tempFile.toString());  // XXX The results have format: dataset_pid, dataset_bid, queryset_pid, queryset_bid
+
+			Enumeration<? extends ZipEntry> entries = zipFile.entries();
+
+			while(entries.hasMoreElements()) {
+				ZipEntry zipEntry = entries.nextElement();
+				System.out.println(zipEntry.getName());
+				BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)));
+				String line = bufferedReader.readLine();
+				while(line != null){
+//					System.out.println("here: " + line);
+					String[] components = line.split(",");
+					int qpid = 0;
+					int qbid = 1;
+					int dpid = 2;
+					int dbid = 3;
+					
+					String rowContent = wrap(components[dpid]) + wrap(components[dbid]) + wrap(components[qpid]) + wrap(components[qbid]) +
+							wrap(SccManager.getInstance().datasetHeaderMap.get(components[dpid])) +
+							wrap(SccManager.getInstance().datasetLicenseMap.get(components[dpid])) +
+							wrap(SccManager.getInstance().headerMap.get(components[qpid])) +
+							wrap(SccManager.getInstance().licenseMap.get(components[qpid]));
+					String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
+					results = results.concat(row);
+					
+					line = bufferedReader.readLine();
+				}
+				bufferedReader.close();
+				
+				// XXX method that outputs a table
+//				InputStream is = zipFile.getInputStream(zipEntry);
+//				String cssclass = "none";
+//				CSVToTable csvtotable = new CSVToTable( is, ',', '\"', "#", CSV.UTF8, cssclass );
+//				results = results.concat(csvtotable.table); // TODO add some sort of label to indicate the difference between files. e.g. each iteration of this loop is a different file being parsed. So, should there be a label for each file in the output of the table generator?
+			}
+			zipFile.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+	
+	public void loadHeaderFile(Path headerTempFile) {
+		// XXX CSV file format
+		// cloneId,path,startLineNo,endLineNo
+		// 1,../../data_set/100_modules/0-core-client-1.1.0a5.tar.gz/0-core-client-1.1.0a5/zeroos/core0/client/__init__.py,1,1
+		
+		this.headerMap.clear();
+		// based on: http://www.java67.com/2015/08/how-to-load-data-from-csv-file-in-java.html
+		try (BufferedReader br = Files.newBufferedReader(headerTempFile, StandardCharsets.UTF_8)) {
+			String line = br.readLine();
+			while (line != null) {
+				String[] parts = line.split(",", 2);
+
+				this.headerMap.put(parts[0], parts[1]);
+//				System.out.println(parts.length + " __ " + parts[0] + " __ " + parts[1]);
+				line = br.readLine();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void loadLicenseFile(Path licenseTempFile) {
+		// XXX CSV file format
+		// cloneId,license(s)
+		// 1,NONE
+		
+		this.licenseMap.clear();
+		try (BufferedReader br = Files.newBufferedReader(licenseTempFile, StandardCharsets.UTF_8)) {
+			String line = br.readLine();
+			while (line != null) {
+				String[] parts = line.split(",", 2);
+
+				this.licenseMap.put(parts[0], parts[1]);
+//				System.out.println(parts.length + " __ " + parts[0] + " __ " + parts[1]);
+				line = br.readLine();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void loadDatasetHeaderFile(Path headerTempFile) {
+		// TODO Auto-generated method stub
+		this.datasetHeaderMap.clear();
+		// based on: http://www.java67.com/2015/08/how-to-load-data-from-csv-file-in-java.html
+		try (BufferedReader br = Files.newBufferedReader(headerTempFile, StandardCharsets.UTF_8)) {
+			String line = br.readLine();
+			while (line != null) {
+				String[] parts = line.split(",", 2);
+
+				this.datasetHeaderMap.put(parts[0], parts[1]);
+//				System.out.println(parts.length + " __ " + parts[0] + " __ " + parts[1]);
+				line = br.readLine();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void loadDatasetLicenseFile(Path licenseTempFile) {
+		// TODO Auto-generated method stub
+		this.datasetLicenseMap.clear();
+		try (BufferedReader br = Files.newBufferedReader(licenseTempFile, StandardCharsets.UTF_8)) {
+			String line = br.readLine();
+			while (line != null) {
+				String[] parts = line.split(",", 2);
+
+				this.datasetLicenseMap.put(parts[0], parts[1]);
+//				System.out.println(parts.length + " __ " + parts[0] + " __ " + parts[1]);
+				line = br.readLine();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+
+	public String wrap(String value) { 
+		return "<td>" + value + "</td>";
 	}
 }

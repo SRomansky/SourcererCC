@@ -160,8 +160,10 @@ public class SearchManager {
 	public String managerURL = "localhost";
 	public int managerPort = 4567;
 	
-	public static String licenseFilePath = null;
-	public static String headerFilePath = null;
+	public static String queryHeaderFilePath = null;
+	public static String queryLicenseFilePath = null;
+	public static String datasetHeaderFilePath = null;
+	public static String datasetLicenseFilePath = null;
     
     public SearchManager(String[] args) throws IOException {
     	this.resetQueryCounters();
@@ -395,10 +397,10 @@ public class SearchManager {
             logger.debug("Query path:" + SearchManager.QUERY_DIR_PATH);
             SearchManager.LOG_PROCESSED_LINENUMBER_AFTER_X_LINES = Integer
                     .parseInt(properties.getProperty("LOG_PROCESSED_LINENUMBER_AFTER_X_LINES", "1000"));
-            SearchManager.licenseFilePath = properties.getProperty("DATASET_LICENSE_FILE_PATH");
-            SearchManager.headerFilePath = properties.getProperty("DATASET_HEADER_FILE_PATH");
-            System.out.println("header path: " + SearchManager.headerFilePath);
-            System.out.println(properties.getProperty("DATASET_HEADER_FILE_PATH"));
+            SearchManager.datasetLicenseFilePath = properties.getProperty("DATASET_LICENSE_FILE_PATH");
+            SearchManager.datasetHeaderFilePath = properties.getProperty("DATASET_HEADER_FILE_PATH");
+            SearchManager.queryHeaderFilePath = properties.getProperty("QUERY_LICENSE_FILE_PATH");
+            SearchManager.queryLicenseFilePath = properties.getProperty("QUERY_LICENSE_FILE_PATH");
 
             theInstance = new SearchManager(args);
             String shardsOrder = properties.getProperty("METRICS_ORDER_IN_SHARDS");
