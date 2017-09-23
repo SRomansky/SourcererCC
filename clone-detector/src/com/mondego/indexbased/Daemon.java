@@ -16,6 +16,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -55,8 +56,8 @@ public class Daemon {
 	public static String outputDir = null;
 	public static String dataset_id = null; // In INIT this variable is set to the SHA-256 of the dataset.
 	
-	HashMap<String, String> headerMap = new HashMap<String, String>();
-	HashMap<String, String> licenseMap = new HashMap<String, String>();
+	HashMap<String, String> queryHeaderMap = new HashMap<String, String>();
+	HashMap<String, String> queryLicenseMap = new HashMap<String, String>();
 	
 	HashMap<String, String> datasetHeaderMap = new HashMap<String, String>();
 	HashMap<String, String> datasetLicenseMap = new HashMap<String, String>();
@@ -323,6 +324,10 @@ public class Daemon {
 	public String generateReport(String queryHeaderFilePath, String queryLicenseFilePath, String datasetHeaderFilePath,
 			String datasetLicenseFilePath) {
 		// TODO Auto-generated method stub
+		loadCsvFileToMap(Paths.get(queryHeaderFilePath), queryHeaderMap);
+		loadCsvFileToMap(Paths.get(queryLicenseFilePath), queryLicenseMap);
+		loadCsvFileToMap(Paths.get(datasetHeaderFilePath), datasetHeaderMap);
+		loadCsvFileToMap(Paths.get(datasetLicenseFilePath), datasetLicenseMap);
 		return null;
 	}
 	
@@ -394,78 +399,27 @@ public class Daemon {
 
 	}
 	
-	public void loadHeaderFile(Path headerTempFile) {
-		// XXX CSV file format
-		// cloneId,path,startLineNo,endLineNo
-		// 1,../../data_set/100_modules/0-core-client-1.1.0a5.tar.gz/0-core-client-1.1.0a5/zeroos/core0/client/__init__.py,1,1
+	public void loadCsvFileToMap(Path csvFile, HashMap<String, String> map) {
+		/**
+		 * This function is used to load the header and license file into maps.
+		 * 
+		 * The header file has a structure like this:
+		 * cloneId,path,startLineNo,endLineNo
+		 * 1,../../data_set/100_modules/0-core-client-1.1.0a5.tar.gz/0-core-client-1.1.0a5/zeroos/core0/client/__init__.py,1,1
+		 * 
+		 * The license file has a structure like this:
+		 * cloneId,license(s)
+		 * 1,NONE
+		 */
 		
-		this.headerMap.clear();
+		map.clear();
 		// based on: http://www.java67.com/2015/08/how-to-load-data-from-csv-file-in-java.html
-		try (BufferedReader br = Files.newBufferedReader(headerTempFile, StandardCharsets.UTF_8)) {
+		try (BufferedReader br = Files.newBufferedReader(csvFile, StandardCharsets.UTF_8)) {
 			String line = br.readLine();
 			while (line != null) {
 				String[] parts = line.split(",", 2);
 
-				this.headerMap.put(parts[0], parts[1]);
-//				System.out.println(parts.length + " __ " + parts[0] + " __ " + parts[1]);
-				line = br.readLine();
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public void loadLicenseFile(Path licenseTempFile) {
-		// XXX CSV file format
-		// cloneId,license(s)
-		// 1,NONE
-		
-		this.licenseMap.clear();
-		try (BufferedReader br = Files.newBufferedReader(licenseTempFile, StandardCharsets.UTF_8)) {
-			String line = br.readLine();
-			while (line != null) {
-				String[] parts = line.split(",", 2);
-
-				this.licenseMap.put(parts[0], parts[1]);
-//				System.out.println(parts.length + " __ " + parts[0] + " __ " + parts[1]);
-				line = br.readLine();
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public void loadDatasetHeaderFile(Path headerTempFile) {
-		// TODO Auto-generated method stub
-		this.datasetHeaderMap.clear();
-		// based on: http://www.java67.com/2015/08/how-to-load-data-from-csv-file-in-java.html
-		try (BufferedReader br = Files.newBufferedReader(headerTempFile, StandardCharsets.UTF_8)) {
-			String line = br.readLine();
-			while (line != null) {
-				String[] parts = line.split(",", 2);
-
-				this.datasetHeaderMap.put(parts[0], parts[1]);
-//				System.out.println(parts.length + " __ " + parts[0] + " __ " + parts[1]);
-				line = br.readLine();
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public void loadDatasetLicenseFile(Path licenseTempFile) {
-		// TODO Auto-generated method stub
-		this.datasetLicenseMap.clear();
-		try (BufferedReader br = Files.newBufferedReader(licenseTempFile, StandardCharsets.UTF_8)) {
-			String line = br.readLine();
-			while (line != null) {
-				String[] parts = line.split(",", 2);
-
-				this.datasetLicenseMap.put(parts[0], parts[1]);
-//				System.out.println(parts.length + " __ " + parts[0] + " __ " + parts[1]);
+				map.put(parts[0], parts[1]);
 				line = br.readLine();
 			}
 		} catch (IOException e) {
@@ -474,7 +428,6 @@ public class Daemon {
 		}
 	}
 	
-
 	public String wrap(String value) { 
 		return "<td>" + value + "</td>";
 	}
