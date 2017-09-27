@@ -272,19 +272,19 @@ public class Query {
         bos.close();
     }
 	
-	public void sendResults(String report, String queryId, String datasetId) {
+	public void sendResults(String report, String queryId, String datasetShardId) {
 		ClientConfig clientConfig = new ClientConfig();
 		clientConfig.register(MultiPartFeature.class); 
 		
 		Client client = ClientBuilder.newClient(clientConfig);
-    	WebTarget webTarget = client.target("http://localhost:4567/results");  // TODO dynamic
-    	
-    	MultivaluedMap formData = new MultivaluedStringMap();
-    	formData.add("report", report);
-    	formData.add("qid", queryId);
-    	formData.add("datasetId", datasetId);
-    	
-    	FormDataContentDisposition cd = null;
+		WebTarget webTarget = client.target("http://localhost:4567/results");  // TODO dynamic
+
+		MultivaluedMap formData = new MultivaluedStringMap();
+		formData.add("report", report);
+		formData.add("queryId", queryId);
+		formData.add("datasetShardId", datasetShardId);
+
+		FormDataContentDisposition cd = null;
 		try {
 			cd = new FormDataContentDisposition("form-data; name=\"meta_data\"");
 		} catch (ParseException e) {
@@ -292,16 +292,16 @@ public class Query {
 			System.out.println("A problem occurred.");
 			e.printStackTrace();
 		}
-    	
-    	BodyPart formBody = new BodyPart().entity(formData);
-    	formBody.setMediaType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
-    	formBody.setContentDisposition(cd);
-    	
-    	MultiPart entity = new FormDataMultiPart()
-    			.bodyPart(formBody);
-    	
-    	Response response = webTarget
-    			.request()
-    			.post(Entity.entity(entity, MediaType.MULTIPART_FORM_DATA));
+
+		BodyPart formBody = new BodyPart().entity(formData);
+		formBody.setMediaType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+		formBody.setContentDisposition(cd);
+
+		MultiPart entity = new FormDataMultiPart()
+				.bodyPart(formBody);
+
+		Response response = webTarget
+				.request()
+				.post(Entity.entity(entity, MediaType.MULTIPART_FORM_DATA));
 	}
 }
