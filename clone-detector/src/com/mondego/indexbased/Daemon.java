@@ -61,6 +61,7 @@ public class Daemon {
 	
 	HashMap<String, String> datasetHeaderMap = new HashMap<String, String>();
 	HashMap<String, String> datasetLicenseMap = new HashMap<String, String>();
+	HashMap<String, String> datasetCodeMap = new HashMap<String, String>();
 
 	
 	public enum State {
@@ -320,11 +321,20 @@ public class Daemon {
 	}
 
 	public String generateReport(String queryHeaderFilePath, String queryLicenseFilePath, String datasetHeaderFilePath,
-			String datasetLicenseFilePath) {
+			String datasetLicenseFilePath, String datasetCodeFilePath) {
 		loadCsvFileToMap(Paths.get(queryHeaderFilePath), queryHeaderMap);
 		loadCsvFileToMap(Paths.get(queryLicenseFilePath), queryLicenseMap);
 		loadCsvFileToMap(Paths.get(datasetHeaderFilePath), datasetHeaderMap);
 		loadCsvFileToMap(Paths.get(datasetLicenseFilePath), datasetLicenseMap);
+		loadCsvFileToMap(Paths.get(datasetCodeFilePath), datasetCodeMap);
+		
+		System.out.println("size of codemap: " + datasetCodeMap.size());
+		
+		// TODO use the report file at this point with another application to look up the code snippets?
+//        String qSrcDir = SearchManager.QUERY_SRC_DIR + "/src.zip";
+//        String dSrcDir = SearchManager.DATASET_SRC_DIR + "/src.zip"; // Could be any folder in here? No. Force it to be src.zip too.
+//        embedCode(report);
+//        
 		
 		String report = "";
 		try {
@@ -350,7 +360,12 @@ public class Daemon {
 									wrap(datasetHeaderMap.get(components[dpid])) +
 									wrap(datasetLicenseMap.get(components[dpid])) +
 									wrap(queryHeaderMap.get(components[qpid])) +
-									wrap(queryLicenseMap.get(components[qpid]));
+									wrap(queryLicenseMap.get(components[qpid])) +
+									wrap("<details>"+
+									  "<summary>Show Code</summary>" +
+									  datasetCodeMap.get("u'" + components[dpid]) +
+									  "</details>");
+									
 							String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
 							report = report.concat(row);
 

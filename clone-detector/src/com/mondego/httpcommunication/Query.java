@@ -67,6 +67,7 @@ public class Query {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public String query(
 			@FormDataParam("query_file") InputStream uploadedInputStream,
+			@FormDataParam("query_src") InputStream querySrcInputStream,
 			@FormDataParam("header_file") InputStream headerInputStream,
 			@FormDataParam("license_file") InputStream licenseInputStream,
 			@FormDataParam("meta_data") FormDataBodyPart metaData
@@ -93,6 +94,11 @@ public class Query {
 			Files.copy(uploadedInputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
 			
 	        shash = getFileHash(tempFile);
+
+//			java.nio.file.Path querySrcPath = Paths.get(SearchManager.QUERY_SRC_DIR);
+//			Files.deleteIfExists(querySrcPath);
+//			Files.createFile(querySrcPath);
+//			Files.copy(querySrcInputStream, querySrcPath);
 		} catch (IOException | NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -101,6 +107,7 @@ public class Query {
 		System.out.println("Got query id: " + qid);
 		
 		try {
+			
 			java.nio.file.Path queryHeaderPath = Paths.get(SearchManager.queryHeaderFilePath);
 			Files.deleteIfExists(queryHeaderPath);
 			Files.createFile(queryHeaderPath);  // TODO check if file attributes are needed...
@@ -155,8 +162,10 @@ public class Query {
         File resultsDir = daemon.getResults();
         String report = daemon.generateReport(
         		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, 
-        		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath
+        		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath, SearchManager.DATASET_SRC_DIR // TODO rename
         		);
+        
+        
         sendResults(report, qid, daemon.dataset_id);
 		
 		return "Query completed.";
@@ -182,7 +191,7 @@ public class Query {
         File resultsDir = daemon.getResults();
         String report = daemon.generateReport(
         		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, 
-        		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath
+        		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath, SearchManager.DATASET_SRC_DIR // TODO rename
         		);
         sendResults(report, "local", daemon.dataset_id);  // TODO qid should be sha-256 of the query content zip file. It is not guaranteed that the zip file will exist/be identifiable from this location.
 		

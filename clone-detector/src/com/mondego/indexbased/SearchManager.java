@@ -78,7 +78,9 @@ public class SearchManager {
     public static CodeSearcher gtpmSearcher;
     public CloneHelper cloneHelper;
     public static String QUERY_DIR_PATH;
+    public static String QUERY_SRC_DIR;
     public static String DATASET_DIR;
+    public static String DATASET_SRC_DIR;
     public static String WFM_DIR_PATH;
     public static Writer clonesWriter; // writer to write the output
     public static Writer recoveryWriter; // writes the lines processed during
@@ -387,6 +389,7 @@ public class SearchManager {
         try {
             properties.load(fis);
             SearchManager.DATASET_DIR = SearchManager.ROOT_DIR + properties.getProperty("DATASET_DIR_PATH");
+            SearchManager.DATASET_SRC_DIR = properties.getProperty("DATASET_SRC_PATH"); // this is actually a single file
             SearchManager.isGenCandidateStats = Boolean
                     .parseBoolean(properties.getProperty("IS_GEN_CANDIDATE_STATISTICS"));
             SearchManager.isStatusCounterOn = Boolean.parseBoolean(properties.getProperty("IS_STATUS_REPORTER_ON"));
@@ -394,6 +397,7 @@ public class SearchManager {
             SearchManager.OUTPUT_DIR = SearchManager.ROOT_DIR + properties.getProperty("OUTPUT_DIR");
             SearchManager.OUTPUT_DIR_TH = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR;
             SearchManager.QUERY_DIR_PATH = SearchManager.ROOT_DIR + properties.getProperty("QUERY_DIR_PATH");
+            SearchManager.QUERY_SRC_DIR = properties.getProperty("QUERY_SRC_PATH");  // this is actually a single file
             logger.debug("Query path:" + SearchManager.QUERY_DIR_PATH);
             SearchManager.LOG_PROCESSED_LINENUMBER_AFTER_X_LINES = Integer
                     .parseInt(properties.getProperty("LOG_PROCESSED_LINENUMBER_AFTER_X_LINES", "1000"));
