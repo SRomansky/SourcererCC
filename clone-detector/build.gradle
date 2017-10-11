@@ -3,6 +3,10 @@ apply plugin: 'eclipse'
 
 ant.importBuild 'build.xml'
 
+// run tests with `gradle test`
+// build client with `gradle jarCDI2`
+
+
 def cdIndex      = "indexbased.SearchManager"
 
 def buildDir     = "build"
@@ -50,12 +54,23 @@ sourceSets {
 	  srcDirs = ['src/com/mondego']
         }
     }
+    test {
+        java {
+            srcDirs = ["src/test"]
+        }
+    }
 }
 
 // these are the dependencies for the jar file
 dependencies {
   compile fileTree(dir: 'lib', include: ['*.jar', '*/*.jar'])
+  testCompile group: 'junit', name: 'junit', version: '4.12'
 }
+
+repositories {
+  mavenCentral()
+}
+
 
 // we need dependencies at build time
 buildscript {
