@@ -127,7 +127,10 @@ public class Daemon {
 			List<FileInputStream> foundStreams,
 			boolean includeHiddenFiles) {
 
-		File[] fileList = dir.listFiles();        
+		File[] fileList = dir.listFiles();
+		if (fileList == null) {
+			System.out.println("dataset not found in directory: " + dir.toString());
+		}
 		Arrays.sort(fileList,               // Need in reproducible order
 				new Comparator<File>() {
 			public int compare(File f1, File f2) {                       
@@ -323,7 +326,7 @@ public class Daemon {
 
 	public String generateReport(String queryHeaderFilePath, String queryLicenseFilePath, String datasetHeaderFilePath,
 			String datasetLicenseFilePath, String datasetCodeFilePath) {
-		loadCsvFileToMap(Paths.get(queryHeaderFilePath), queryHeaderMap);
+		loadCsvFileToMap(Paths.get(queryHeaderFilePath), queryHeaderMap); // XXX Assert that the hashes have the same length. (They can have different lengths if not all of the parser files were copied to the client.)
 		loadCsvFileToMap(Paths.get(queryLicenseFilePath), queryLicenseMap);
 		loadCsvFileToMap(Paths.get(datasetHeaderFilePath), datasetHeaderMap);
 		loadCsvFileToMap(Paths.get(datasetLicenseFilePath), datasetLicenseMap);
