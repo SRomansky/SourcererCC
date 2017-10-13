@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -191,7 +193,7 @@ public class DaemonTest {
 		String reportPath = System.getProperty("user.dir") + "/src/test/expected_report.txt";
 		String expectedReport = null;
         try {
-			expectedReport = new String(Files.readAllBytes(Paths.get(reportPath)));
+			expectedReport = new String(Files.readAllBytes(Paths.get(reportPath))).trim();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -200,6 +202,25 @@ public class DaemonTest {
         // TODO write a report comparison method.
         // The reports rows get shuffled between calls. So, string match won't work to compare them. comparing html nodes could work, unless there are embedded html code in the clones.
 //        assertEquals("Generated report looks incorrect", report, expectedReport);
+        // This is a work-around.
+        String[] rp = report.split(Pattern.quote("<tr class=\\\"none\\\">"));
+        String[] erp = expectedReport.split(Pattern.quote("<tr class=\\\"none\\\">")); // assume that the clones don't contain this tag.
+        HashMap rpmap = new HashMap();
+        HashMap erpmap = new HashMap();
+        for (String row : rp) {
+        		rpmap.put(row, true);
+        }
+        for (String row : erp) {
+        		erpmap.put(row, true);
+        }
+        // check the two maps have the same rows.
+        for (Object key : erpmap.keySet()) {
+        		if (null == rpmap.get(key)) {
+        			System.out.println("begin: " + key + " :end");  // the missing row.
+        		}
+        		assertNotNull (rpmap.get(key)); // "Missing row in report"
+        }
+        
 	}
 	
 	/**
