@@ -146,6 +146,7 @@ public class DaemonTest {
 	
 	/**
 	 * Check that the client can run clone detection comparing the queryset to the dataset.
+	 * Check that the report is generated properly by the client.
 	 */
 	@Test
 	public void testQuery() {
@@ -199,9 +200,7 @@ public class DaemonTest {
 			e.printStackTrace();
 			fail("Failed to read expected report.");
 		}
-        // TODO write a report comparison method.
         // The reports rows get shuffled between calls. So, string match won't work to compare them. comparing html nodes could work, unless there are embedded html code in the clones.
-//        assertEquals("Generated report looks incorrect", report, expectedReport);
         // This is a work-around.
         String[] rp = report.split(Pattern.quote("<tr class=\\\"none\\\">"));
         String[] erp = expectedReport.split(Pattern.quote("<tr class=\\\"none\\\">")); // assume that the clones don't contain this tag.
@@ -223,9 +222,7 @@ public class DaemonTest {
         
 	}
 	
-	/**
-	 * Check that the report is generated properly by the client.
-	 */
+	
 	
 	// TODO on the server, ensure that a report can be received from the client.
 	// TODO on the server, ensure that multiple reports can be received from the clients at the same time.
