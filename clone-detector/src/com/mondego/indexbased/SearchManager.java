@@ -276,16 +276,7 @@ public class SearchManager {
         logger.debug(SearchManager.NODE_PREFIX + " MAX_TOKENS=" + max_tokens + " MIN_TOKENS=" + min_tokens);
 
         Util.createDirs(SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR);
-        if (SearchManager.ACTION.equalsIgnoreCase(ACTION_CREATE_SHARDS)) {
-            System.err.println("Depricated action: " + ACTION_CREATE_SHARDS);
-            System.exit(1);
-        } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_SEARCH)) {
-        		System.err.println("Depricated action: " + ACTION_SEARCH);
-        		System.exit(1);
-        } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_INIT)) {
-            WordFrequencyStore wfs = new WordFrequencyStore();
-            wfs.populateLocalWordFreqMap(); // read query files and populate TreeMap with lucene configuration
-        } else if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
+        if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
         		//String ip = InetAddress.getLocalHost().getHostAddress();  // TODO this might be the wrong ip // It is wrong :(
         		String ip = "127.0.0.1";
 
@@ -297,6 +288,9 @@ public class SearchManager {
         		theInstance.server.run();
         		
         		// XXX Jersey stuff
+        } else {
+        		System.err.println("Depricated action: " + SearchManager.ACTION);
+        		System.exit(1);
         }
         long estimatedTime = System.nanoTime() - start_time;
         logger.info("Total run Time: " + (estimatedTime / 1000) + " micors");
@@ -305,9 +299,9 @@ public class SearchManager {
         try {
         	Util.closeOutputFile(SearchManager.clonesWriter);
         	Util.closeOutputFile(SearchManager.recoveryWriter);
-        	if (SearchManager.ACTION.equals(ACTION_SEARCH)) {
-        		theInstance.backupOutput();
-        	}
+//        	if (SearchManager.ACTION.equals(ACTION_SEARCH)) {
+//        		theInstance.backupOutput();
+//        	}
         } catch (Exception e) {
             logger.error("exception caught in main " + e.getMessage());
         }
