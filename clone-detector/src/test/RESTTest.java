@@ -54,9 +54,9 @@ public class RESTTest {
         
         Response r1 = target.request().get();
         assert(r1.getStatus() == Response.Status.OK.getStatusCode());
-        assert(r1.readEntity(String.class) == "IDLE");
+        assertEquals("Unexpected state.", r1.readEntity(String.class), "IDLE");
         
-        // TODO add a BUSY status request. Can the client respond to status queries asynchronously?
+        // TODO add a INIT status request. Can the client respond to status queries asynchronously?
         
 	}
 	// TODO make tests
