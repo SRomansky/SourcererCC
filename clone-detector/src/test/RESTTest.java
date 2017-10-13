@@ -18,6 +18,8 @@ public class RESTTest {
 	// run the tests with gradle.
 	// requires an instance of the scc-manager to be running.
 
+	// clone-detector/src/test/input contains a mock format of clone-detector/input
+	
     public static final String BASE_URI = "http://127.0.0.1:4568/";
 	SearchManager instance;
 	@Before
