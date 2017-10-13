@@ -46,7 +46,6 @@ task jarCDI2(dependsOn: 'compile2', type: Jar) {
      from { compile2.classpath.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
-
 sourceSets {
     main {
         java {

@@ -45,6 +45,11 @@ public class JerseyServer {
         return GrizzlyHttpServerFactory.createHttpServer(BASE_URI, rc);
     }
     
+    public static void stop() {
+    		Daemon daemon = Daemon.getInstance();
+    		daemon.server.shutdownNow();
+    }
+    
     public static void run() {
     	try {
     		Daemon daemon = Daemon.getInstance();
@@ -74,6 +79,7 @@ public class JerseyServer {
     				"jersey.config.server.provider.classnames", 
     				"org.glassfish.jersey.media.multipart.MultiPartFeature");
     		HttpServer server = GrizzlyWebContainerFactory.create(BASE_URI, ServletContainer.class, initParams);
+    		daemon.server = server;
     		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
     			@Override
     			public void run() {
