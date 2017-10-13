@@ -42,6 +42,7 @@ public class RESTTest {
 	
 	@Test
 	public void testStatus() {
+		// XXX This test is bad. There will be variance in runtime based on what is running it.
 		Client client = ClientBuilder.newClient();
         WebTarget target = client.target(BASE_URI).path("status");
         

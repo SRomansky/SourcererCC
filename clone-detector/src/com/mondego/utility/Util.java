@@ -56,7 +56,7 @@ public class Util {
             + "fwdindex";
     public static final String FWD_INDEX_DIR_TEMP = SearchManager.ROOT_DIR
             + "fwdindex_temp";
-    public static final String GTPM_INDEX_DIR = SearchManager.ROOT_DIR
+    public static String GTPM_INDEX_DIR = SearchManager.ROOT_DIR
             + "gtpmindex";
     public static final String INDEX_DIR_NO_FILTER = SearchManager.ROOT_DIR
             + "index_nofilter";
