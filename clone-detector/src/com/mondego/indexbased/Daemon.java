@@ -352,9 +352,46 @@ public class Daemon {
 //        
 		
 		String report = "";
+		
+		String css = "<style>\n" + 
+		"  div#expand{\n" + 
+		"  display:block;\n" + 
+		"  }\n" + 
+		"\n" + 
+		"  .wrapper {\n" + 
+		"  width: 100%;\n" + 
+		"  border: 1px solid black;\n" + 
+		"  overflow: hidden;\n" + 
+		"  }\n" + 
+		"\n" + 
+		"  .first {\n" + 
+		"  border: 1px solid grey;\n" + 
+		"  width: 49%;\n" + 
+		"  float: left;\n" + 
+		"  }\n" + 
+		"  .second {\n" + 
+		"  border: 1px solid grey;\n" + 
+		"  width: 49%;\n" + 
+		"  float: right;\n" + 
+		"  }\n" + 
+		"</style>\n";
+		
+		String js = "<script>\n" + 
+		"  function show(id)\n" + 
+		"  {\n" + 
+		"  if(document.getElementById(id).style.display == 'none')\n" + 
+		"  document.getElementById(id).style.display = 'block';\n" + 
+		"  else\n" + 
+		"  document.getElementById(id).style.display = 'none';\n" + 
+		"  }\n" + 
+		"</script>\n";
+		
+		report += css + js;
+		
 		try {
 			File dir = new File(outputDir);
 			File[] directoryListing = dir.listFiles();
+			int lineno = 0;
 			if (directoryListing != null) {
 				for (File file : directoryListing) {
 					if (file.isFile()) {
@@ -378,18 +415,22 @@ public class Daemon {
 									wrap(datasetHeaderMap.get(components[dpid])) +
 									wrap(datasetLicenseMap.get(components[dpid])) +
 									wrap(queryHeaderMap.get(components[qpid])) +
-									wrap(queryLicenseMap.get(components[qpid])) +
-									wrap("<details>"+
-									  "<summary>Show Code</summary>" +
-											"<pre><code class=\"language-python\">" +
-									  StringEscapeUtils.unescapeJava( datasetCodeMap.get("u'" + components[dpid])) +  // XXX This probably doesn't unescape the code properly. But, it is a start.
-									  "</code></pre>" +
-									  "</details>");
+									wrap(queryLicenseMap.get(components[qpid])) + "</tr><tr>" +
+									"<td colspan=8>" + makeCodeBlock("" + lineno, "TODO: querycode", "<pre><code class=\"language-python\">" + // colspan states how many columns this entry may span.
+											  StringEscapeUtils.unescapeJava( datasetCodeMap.get("u'" + components[dpid])) +  // XXX This probably doesn't unescape the code properly. But, it is a start.
+											  "</code></pre>") + "</td>";
+//									wrap("<details>"+
+//									  "<summary>Show Code</summary>" +
+//											"<pre><code class=\"language-python\">" +
+//									  StringEscapeUtils.unescapeJava( datasetCodeMap.get("u'" + components[dpid])) +  // XXX This probably doesn't unescape the code properly. But, it is a start.
+//									  "</code></pre>" +
+//									  "</details>");
 									
 							String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
 							report = report.concat(row);
 
 							line = bufferedReader.readLine();
+							lineno++;
 						}
 						bufferedReader.close();
 					}
@@ -438,4 +479,28 @@ public class Daemon {
 	public String wrap(String value) { 
 		return "<td>" + value + "</td>";
 	}
+	
+	private String makeCodeBlock(String id, String queryCode, String dataCode) {
+		String html = "<button onclick=\"show('" + id + "')\">Show/Hide Code</button>\n" + 
+		"\n" + 
+		"<div id=\"" + id + "\" class=\"wrapper\" style=\"display: none;\">\n" + 
+		"  <div class=\"first\">\n" + 
+		"    <div>\n" + 
+		"      Query code\n" + 
+		"    </div>\n" + 
+		"    <div>\n" + 
+		"      " + queryCode +
+		"    </div>\n" + 
+		"  </div>\n" + 
+		"  <div class=\"second\">\n" + 
+		"    <div>\n" + 
+		"      Dataset code\n" + 
+		"    </div>\n" + 
+		"    <div>\n" + 
+		"      " + dataCode +
+		"    </div>\n" + 
+		"  </div>\n" + 
+		"</div>";
+		return html;
+		}
 }
