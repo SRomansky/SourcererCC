@@ -180,7 +180,7 @@ public class DaemonTest {
 		instance.daemon.query(); // This shouldn't throw any exceptions.
 		
 		String report = instance.daemon.generateReport(
-        		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, 
+        		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, SearchManager.QUERY_SRC_DIR,
         		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath, SearchManager.DATASET_SRC_DIR // TODO rename
         		);
 		// Use this code to create a new expected_report.txt file in the clone-detector directory, if you have changed the format.
@@ -202,8 +202,12 @@ public class DaemonTest {
 		}
         // The reports rows get shuffled between calls. So, string match won't work to compare them. comparing html nodes could work, unless there are embedded html code in the clones.
         // This is a work-around.
-        String[] rp = report.split(Pattern.quote("<tr class=\\\"none\\\">"));
-        String[] erp = expectedReport.split(Pattern.quote("<tr class=\\\"none\\\">")); // assume that the clones don't contain this tag.
+        String noid_report = report.replaceAll("show\\('\\d+'\\)", "")
+        	.replaceAll("id=\"\\d+\"", "");
+        String noid_ereport = expectedReport.replaceAll("show\\('\\d+'\\)", "")
+            	.replaceAll("id=\"\\d+\"", "");
+        String[] rp = noid_report.split(Pattern.quote("<tr class=\\\"none\\\">"));
+        String[] erp = noid_ereport.split(Pattern.quote("<tr class=\\\"none\\\">")); // assume that the clones don't contain this tag.
         HashMap rpmap = new HashMap();
         HashMap erpmap = new HashMap();
         for (String row : rp) {
