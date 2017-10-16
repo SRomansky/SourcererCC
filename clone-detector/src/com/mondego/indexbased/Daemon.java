@@ -60,7 +60,8 @@ public class Daemon {
 	
 	HashMap<String, String> queryHeaderMap = new HashMap<String, String>();
 	HashMap<String, String> queryLicenseMap = new HashMap<String, String>();
-	
+	HashMap<String, String> queryCodeMap = new HashMap<String, String>();
+
 	HashMap<String, String> datasetHeaderMap = new HashMap<String, String>();
 	HashMap<String, String> datasetLicenseMap = new HashMap<String, String>();
 	HashMap<String, String> datasetCodeMap = new HashMap<String, String>();
@@ -335,10 +336,12 @@ public class Daemon {
 		return resultsPath;
 	}
 
-	public String generateReport(String queryHeaderFilePath, String queryLicenseFilePath, String datasetHeaderFilePath,
+	public String generateReport(String queryHeaderFilePath, String queryLicenseFilePath, String queryCodeFilePath,
+			String datasetHeaderFilePath,
 			String datasetLicenseFilePath, String datasetCodeFilePath) {
 		loadCsvFileToMap(Paths.get(queryHeaderFilePath), queryHeaderMap); // XXX Assert that the hashes have the same length. (They can have different lengths if not all of the parser files were copied to the client.)
 		loadCsvFileToMap(Paths.get(queryLicenseFilePath), queryLicenseMap);
+		loadCsvFileToMap(Paths.get(queryCodeFilePath), queryCodeMap);
 		loadCsvFileToMap(Paths.get(datasetHeaderFilePath), datasetHeaderMap);
 		loadCsvFileToMap(Paths.get(datasetLicenseFilePath), datasetLicenseMap);
 		loadCsvFileToMap(Paths.get(datasetCodeFilePath), datasetCodeMap);
@@ -416,7 +419,11 @@ public class Daemon {
 									wrap(datasetLicenseMap.get(components[dpid])) +
 									wrap(queryHeaderMap.get(components[qpid])) +
 									wrap(queryLicenseMap.get(components[qpid])) + "</tr><tr>" +
-									"<td colspan=8>" + makeCodeBlock("" + lineno, "TODO: querycode", "<pre><code class=\"language-python\">" + // colspan states how many columns this entry may span.
+									"<td colspan=8>" + makeCodeBlock("" + lineno, 
+											"<pre><code class=\"language-python\">" + // colspan states how many columns this entry may span.
+													  StringEscapeUtils.unescapeJava( queryCodeMap.get("u'" + components[qpid])) +  // XXX This probably doesn't unescape the code properly. But, it is a start.
+													  "</code></pre>", 
+											"<pre><code class=\"language-python\">" + // colspan states how many columns this entry may span.
 											  StringEscapeUtils.unescapeJava( datasetCodeMap.get("u'" + components[dpid])) +  // XXX This probably doesn't unescape the code properly. But, it is a start.
 											  "</code></pre>") + "</td>";
 //									wrap("<details>"+
