@@ -108,7 +108,7 @@ public class Query {
 		System.out.println("Got query id: " + qid);
 		
 		try {
-			
+			System.out.println("Header path: " + SearchManager.queryHeaderFilePath);
 			java.nio.file.Path queryHeaderPath = Paths.get(SearchManager.queryHeaderFilePath);
 			Files.deleteIfExists(queryHeaderPath);
 			Files.createFile(queryHeaderPath);  // TODO check if file attributes are needed...

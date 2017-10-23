@@ -119,8 +119,8 @@ public class WordFrequencyStore implements ITokensFileProcessor {
             this.prepareIndex();
 
             for (File inputFile : queryDir.listFiles()) {
-
-                this.readTokensFile(inputFile);
+            	if (inputFile.isFile())
+            		this.readTokensFile(inputFile);
 
             }
 
