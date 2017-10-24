@@ -208,8 +208,8 @@ public class DaemonTest {
             	.replaceAll("id=\"\\d+\"", "");
         String[] rp = noid_report.split(Pattern.quote("<tr class=\\\"none\\\">"));
         String[] erp = noid_ereport.split(Pattern.quote("<tr class=\\\"none\\\">")); // assume that the clones don't contain this tag.
-        HashMap rpmap = new HashMap();
-        HashMap erpmap = new HashMap();
+        HashMap<String, Boolean> rpmap = new HashMap<String, Boolean>();
+        HashMap<String, Boolean> erpmap = new HashMap<String, Boolean>();
         for (String row : rp) {
         		rpmap.put(row, true);
         }
@@ -224,8 +224,130 @@ public class DaemonTest {
         		assertNotNull (rpmap.get(key)); // "Missing row in report"
         }
         
+        // TODO check the generated report for 1 or 2 specific clone pairs.
+        
 	}
 	
+	void setSearchManagerProperties(String basePath, String dir, String filePrefix) {
+		String testDir = basePath + "/" + dir;
+		
+		SearchManager.DATASET_DIR = testDir + "/dataset";
+        SearchManager.DATASET_SRC_DIR = testDir + "/test.code"; // this is actually a single file, this is the code file //TODO rename this variable.
+        SearchManager.datasetLicenseFilePath = testDir + "/test.license";
+        SearchManager.datasetHeaderFilePath = testDir + "/test.header";  // Where is the code file?
+        
+		return;
+	}
+	
+	void copyQueryFiles(String dataset, String code, String license, String header) {
+		try {
+			// clean up data
+			FileUtils.cleanDirectory(new File(SearchManager.QUERY_DIR_PATH));
+			FileUtils.forceDelete(new File(SearchManager.QUERY_SRC_DIR));
+			FileUtils.forceDelete(new File(SearchManager.queryHeaderFilePath));
+			FileUtils.forceDelete(new File(SearchManager.datasetLicenseFilePath));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			fail("Failed to clean test files.");
+		}
+		
+		try {
+			// copy new test data
+			FileUtils.copyDirectory(new File(SearchManager.DATASET_DIR), new File(SearchManager.QUERY_DIR_PATH)); // input/dataset/*token
+			FileUtils.copyFile(new File(SearchManager.DATASET_SRC_DIR), new File(SearchManager.QUERY_SRC_DIR));  // test.code
+			FileUtils.copyFile(new File(SearchManager.datasetHeaderFilePath), new File(SearchManager.queryHeaderFilePath)); // test.header
+			FileUtils.copyFile(new File(SearchManager.datasetLicenseFilePath), new File(SearchManager.queryLicenseFilePath)); // test.license
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			fail("Error copying test files.");
+		}
+	}
+	
+	void copy10Modules(String path) {
+		String ten_module = path + "/10m/";  //testDataPath + "/10m/";
+		copyQueryFiles(ten_module + "dataset",
+				ten_module + "10m.code",
+				ten_module + "10m.header",
+				ten_module + "10m.license"
+				);
+		return;
+	}
+	
+	void copy100Modules(String path) {
+		String hundred_module = path + "/100m/";  //testDataPath + "/10m/";
+		copyQueryFiles(hundred_module + "dataset",
+				hundred_module + "100m.code",
+				hundred_module + "100m.header",
+				hundred_module + "100m.license"
+				);
+		return;
+	}
+	
+	void copy1000Modules(String path) {
+		String thousand_module = path + "/1000m/";  //testDataPath + "/10m/";
+		copyQueryFiles(thousand_module + "dataset",
+				thousand_module + "1000m.code",
+				thousand_module + "1000m.header",
+				thousand_module + "1000m.license"
+				);
+		return;
+	}
+	
+	void copy5000Modules(String path) {
+		String fivethousand_module = path + "/5000m/";  //testDataPath + "/10m/";
+		copyQueryFiles(fivethousand_module + "dataset",
+				fivethousand_module + "5000m.code",
+				fivethousand_module + "5000m.header",
+				fivethousand_module + "5000m.license"
+				);
+		return;
+	}
+	
+	@Test
+	void testBenchmark() {
+		// This test requires the benchmark_sets.zip file. It is not included in the github repository.
+		// The zip file should be extracted in src/test/ to make src/test/benchmark_sets
+		// The *.token files have to be put into zip files, and also have to be put into
+		// a dataset directory to work with the SCC conventions.
+		// e.g. make src/test/benchmark_sets/10m/10m.zip and
+		//           src/test/benchmark_sets/10m/dataset/10m.token
+		
+		
+		// general setup
+		String sourcererCCPath = System.getProperty("user.dir"); // <path>/SourcererCC/clone-detector
+		// update the path to the test dataset
+		String testDataPath = sourcererCCPath + "/src/test/benchmark_sets/";
+		SearchManager instance = createDaemon();
+		// end general setup
+		
+		// 10 on 10
+		// setup dataset directories
+		setSearchManagerProperties(testDataPath, "10m", "10m");
+		// setup query directories
+		copy10Modules(testDataPath);
+		
+		Daemon.RESET_GTPM = true;  // first time using 10m dataset, index it even if a gtpmindex file exists.
+		instance.daemon.start(); // load 10m dataset and index it
+		Daemon.RESET_GTPM = false;
+		
+		instance.daemon.query(); // run query using the previously copied files.
+		
+		// 10 on 100
+		copy100Modules(testDataPath);
+		instance.daemon.query();
+		
+		// 10 on 1000
+		copy1000Modules(testDataPath);
+		instance.daemon.query();
+		
+		// 10 on 5000
+		copy5000Modules(testDataPath);
+		instance.daemon.query();
+		
+		
+		return;
+	}
 	
 	
 	// TODO on the server, ensure that a report can be received from the client.

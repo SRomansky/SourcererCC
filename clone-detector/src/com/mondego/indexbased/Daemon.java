@@ -52,6 +52,7 @@ import spark.Request;
 public class Daemon {
 	public static SearchManager sm = null;
 	private static final Logger logger = LogManager.getLogger(Daemon.class);
+	public static boolean RESET_GTPM = false;
 	private static Daemon daemon = null;
 	public static String ip = "";
 	public static int port = 0;
@@ -168,14 +169,16 @@ public class Daemon {
     	setState(State.INIT);
     	dataset_id = calculateDatasetId();
     	
-    	// create gtpm index
-    	WordFrequencyStore wfs = new WordFrequencyStore();
-    try {
-		wfs.populateLocalWordFreqMap();
-	} catch (IOException | ParseException e1) {
-		// TODO Auto-generated catch block
-		e1.printStackTrace();
-	}
+    	if (!(new File(Util.GTPM_INDEX_DIR).exists()) || Daemon.RESET_GTPM) {
+    		// create gtpm index
+    		WordFrequencyStore wfs = new WordFrequencyStore();
+    		try {
+    			wfs.populateLocalWordFreqMap();
+    		} catch (IOException | ParseException e1) {
+    			// TODO Auto-generated catch block
+    			e1.printStackTrace();
+    		}
+    	}
     	
     	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
         File datasetDir = new File(SearchManager.DATASET_DIR);
