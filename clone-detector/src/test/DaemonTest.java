@@ -345,7 +345,53 @@ public class DaemonTest {
 		copy5000Modules(testDataPath);
 		instance.daemon.query();
 		
+		// 100 on 100
+		// setup dataset directories
+		setSearchManagerProperties(testDataPath, "100m", "100m");
+		// setup query directories
+		copy100Modules(testDataPath);
+
+		Daemon.RESET_GTPM = true;  // first time using 100m dataset, index it even if a gtpmindex file exists.
+		instance.daemon.start(); // load 100m dataset and index it
+		Daemon.RESET_GTPM = false;
+
+		instance.daemon.query(); // run query using the previously copied files.
+
+		// 100 on 1000
+		copy1000Modules(testDataPath);
+		instance.daemon.query();
+
+		// 100 on 5000
+		copy5000Modules(testDataPath);
+		instance.daemon.query();
 		
+		// 1000 on 1000
+		// setup dataset directories
+		setSearchManagerProperties(testDataPath, "1000m", "1000m");
+		// setup query directories
+		copy1000Modules(testDataPath);
+
+		Daemon.RESET_GTPM = true;  // first time using 1000m dataset, index it even if a gtpmindex file exists.
+		instance.daemon.start(); // load 1000m dataset and index it
+		Daemon.RESET_GTPM = false;
+
+		instance.daemon.query(); // run query using the previously copied files.
+
+		// 1000 on 5000
+		copy5000Modules(testDataPath);
+		instance.daemon.query();
+		
+		// 5000 on 5000
+		// setup dataset directories
+		setSearchManagerProperties(testDataPath, "5000m", "5000m");
+		// setup query directories
+		copy5000Modules(testDataPath);
+
+		Daemon.RESET_GTPM = true;  // first time using 1000m dataset, index it even if a gtpmindex file exists.
+		instance.daemon.start(); // load 1000m dataset and index it
+		Daemon.RESET_GTPM = false;
+
+		instance.daemon.query(); // run query using the previously copied files.
 		return;
 	}
 	
