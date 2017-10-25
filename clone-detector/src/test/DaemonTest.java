@@ -38,6 +38,8 @@ public class DaemonTest {
 	// XXX Add the test data to the docker images?
 	// XXX Each test should be independent and should be runnable regardless of execution order.
 
+	long startTime = 0;
+	long endtime = 0;
 	
 	/**
 	 * Check the daemon can start without crashing.
@@ -245,7 +247,7 @@ public class DaemonTest {
 			FileUtils.cleanDirectory(new File(SearchManager.QUERY_DIR_PATH));
 			FileUtils.forceDelete(new File(SearchManager.QUERY_SRC_DIR));
 			FileUtils.forceDelete(new File(SearchManager.queryHeaderFilePath));
-			FileUtils.forceDelete(new File(SearchManager.datasetLicenseFilePath));
+			FileUtils.forceDelete(new File(SearchManager.queryLicenseFilePath));
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			fail("Failed to clean test files.");
@@ -253,10 +255,10 @@ public class DaemonTest {
 		
 		try {
 			// copy new test data
-			FileUtils.copyDirectory(new File(SearchManager.DATASET_DIR), new File(SearchManager.QUERY_DIR_PATH)); // input/dataset/*token
-			FileUtils.copyFile(new File(SearchManager.DATASET_SRC_DIR), new File(SearchManager.QUERY_SRC_DIR));  // test.code
-			FileUtils.copyFile(new File(SearchManager.datasetHeaderFilePath), new File(SearchManager.queryHeaderFilePath)); // test.header
-			FileUtils.copyFile(new File(SearchManager.datasetLicenseFilePath), new File(SearchManager.queryLicenseFilePath)); // test.license
+			FileUtils.copyDirectory(new File(dataset), new File(SearchManager.QUERY_DIR_PATH)); // input/dataset/*token
+			FileUtils.copyFile(new File(code), new File(SearchManager.QUERY_SRC_DIR));  // test.code
+			FileUtils.copyFile(new File(header), new File(SearchManager.queryHeaderFilePath)); // test.header
+			FileUtils.copyFile(new File(license), new File(SearchManager.queryLicenseFilePath)); // test.license
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -304,15 +306,24 @@ public class DaemonTest {
 		return;
 	}
 	
+	void setStartTime() {
+		startTime = System.nanoTime();
+	}
+	
+	void setEndTime() {
+		endtime = System.nanoTime();
+	}
+	
+	void logTime(String msg) {
+		setEndTime();
+		long timeDelta = (endtime - startTime) / 1000;
+		System.err.println(msg + ", time (micro seconds): " + timeDelta);
+	}
+	
 	@Test
-	void testBenchmark() {
+	public void testBenchmark() {
 		// This test requires the benchmark_sets.zip file. It is not included in the github repository.
 		// The zip file should be extracted in src/test/ to make src/test/benchmark_sets
-		// The *.token files have to be put into zip files, and also have to be put into
-		// a dataset directory to work with the SCC conventions.
-		// e.g. make src/test/benchmark_sets/10m/10m.zip and
-		//           src/test/benchmark_sets/10m/dataset/10m.token
-		
 		
 		// general setup
 		String sourcererCCPath = System.getProperty("user.dir"); // <path>/SourcererCC/clone-detector
@@ -327,12 +338,19 @@ public class DaemonTest {
 		// setup query directories
 		copy10Modules(testDataPath);
 		
+		setStartTime();
 		Daemon.RESET_GTPM = true;  // first time using 10m dataset, index it even if a gtpmindex file exists.
 		instance.daemon.start(); // load 10m dataset and index it
 		Daemon.RESET_GTPM = false;
-		
+        logTime("Total 10m index run time");
+        
+        setStartTime();
 		instance.daemon.query(); // run query using the previously copied files.
-		
+        logTime("Total 10m v 10m query run time");
+        
+        if (true)
+        return;
+        
 		// 10 on 100
 		copy100Modules(testDataPath);
 		instance.daemon.query();
