@@ -320,7 +320,7 @@ public class DaemonTest {
 		System.err.println(msg + ", time (micro seconds): " + timeDelta);
 	}
 	
-	@Test
+	//@Test
 	public void testBenchmark() {
 		// This test requires the benchmark_sets.zip file. It is not included in the github repository.
 		// The zip file should be extracted in src/test/ to make src/test/benchmark_sets
@@ -335,82 +335,137 @@ public class DaemonTest {
 		// 10 on 10
 		// setup dataset directories
 		setSearchManagerProperties(testDataPath, "10m", "10m");
-		// setup query directories
-		copy10Modules(testDataPath);
 		
 		setStartTime();
 		Daemon.RESET_GTPM = true;  // first time using 10m dataset, index it even if a gtpmindex file exists.
 		instance.daemon.start(); // load 10m dataset and index it
 		Daemon.RESET_GTPM = false;
         logTime("Total 10m index run time");
-        
+
+        // 10 on 10
+        copy10Modules(testDataPath);
         setStartTime();
 		instance.daemon.query(); // run query using the previously copied files.
         logTime("Total 10m v 10m query run time");
         
-        if (true)
-        return;
-        
 		// 10 on 100
 		copy100Modules(testDataPath);
+		setStartTime();
 		instance.daemon.query();
+		logTime("Total 10m v 100m query run time");
 		
 		// 10 on 1000
 		copy1000Modules(testDataPath);
+		setStartTime();
 		instance.daemon.query();
+		logTime("Total 10m v 1000m query run time");
 		
 		// 10 on 5000
 		copy5000Modules(testDataPath);
+		setStartTime();
 		instance.daemon.query();
+		logTime("Total 10m v 5000m query run time");
 		
-		// 100 on 100
-		// setup dataset directories
+		// setup 100m dataset directories
 		setSearchManagerProperties(testDataPath, "100m", "100m");
-		// setup query directories
-		copy100Modules(testDataPath);
 
+		setStartTime();
 		Daemon.RESET_GTPM = true;  // first time using 100m dataset, index it even if a gtpmindex file exists.
 		instance.daemon.start(); // load 100m dataset and index it
 		Daemon.RESET_GTPM = false;
+        logTime("Total 100m index run time");
 
+        // 100 on 10
+        copy10Modules(testDataPath);
+        setStartTime();
 		instance.daemon.query(); // run query using the previously copied files.
-
+        logTime("Total 100m v 10m query run time");
+        
+		// 100 on 100
+		copy100Modules(testDataPath);
+		setStartTime();
+		instance.daemon.query();
+		logTime("Total 100m v 100m query run time");
+		
 		// 100 on 1000
 		copy1000Modules(testDataPath);
+		setStartTime();
 		instance.daemon.query();
-
+		logTime("Total 100m v 1000m query run time");
+		
 		// 100 on 5000
 		copy5000Modules(testDataPath);
+		setStartTime();
 		instance.daemon.query();
-		
-		// 1000 on 1000
-		// setup dataset directories
+		logTime("Total 100m v 5000m query run time");
+        
+		// setup 1000m dataset directories
 		setSearchManagerProperties(testDataPath, "1000m", "1000m");
-		// setup query directories
-		copy1000Modules(testDataPath);
 
+		setStartTime();
 		Daemon.RESET_GTPM = true;  // first time using 1000m dataset, index it even if a gtpmindex file exists.
 		instance.daemon.start(); // load 1000m dataset and index it
 		Daemon.RESET_GTPM = false;
+        logTime("Total 1000m index run time");
 
+        // 1000 on 10
+        copy10Modules(testDataPath);
+        setStartTime();
 		instance.daemon.query(); // run query using the previously copied files.
-
-		// 1000 on 5000
-		copy5000Modules(testDataPath);
+        logTime("Total 1000m v 10m query run time");
+        
+		// 10 on 100
+		copy100Modules(testDataPath);
+		setStartTime();
 		instance.daemon.query();
+		logTime("Total 1000m v 100m query run time");
+		
+		// 10 on 1000
+		copy1000Modules(testDataPath);
+		setStartTime();
+		instance.daemon.query();
+		logTime("Total 1000m v 1000m query run time");
+		
+		// 10 on 5000
+		copy5000Modules(testDataPath);
+		setStartTime();
+		instance.daemon.query();
+		logTime("Total 1000m v 5000m query run time");
+        
+		// setup 5000m dataset directories
+		setSearchManagerProperties(testDataPath, "5000m", "5000m");
+
+		setStartTime();
+		Daemon.RESET_GTPM = true;  // first time using 1000m dataset, index it even if a gtpmindex file exists.
+		instance.daemon.start(); // load 1000m dataset and index it
+		Daemon.RESET_GTPM = false;
+        logTime("Total 5000m index run time");
+
+        // 5000 on 10
+        copy10Modules(testDataPath);
+        setStartTime();
+		instance.daemon.query(); // run query using the previously copied files.
+        logTime("Total 5000m v 10m query run time");
+        
+		// 5000 on 100
+		copy100Modules(testDataPath);
+		setStartTime();
+		instance.daemon.query();
+		logTime("Total 5000m v 100m query run time");
+		
+		// 5000 on 1000
+		copy1000Modules(testDataPath);
+		setStartTime();
+		instance.daemon.query();
+		logTime("Total 5000m v 1000m query run time");
 		
 		// 5000 on 5000
-		// setup dataset directories
-		setSearchManagerProperties(testDataPath, "5000m", "5000m");
-		// setup query directories
 		copy5000Modules(testDataPath);
-
-		Daemon.RESET_GTPM = true;  // first time using 1000m dataset, index it even if a gtpmindex file exists.
-		instance.daemon.start(); // load 1000m dataset and index it
-		Daemon.RESET_GTPM = false;
-
-		instance.daemon.query(); // run query using the previously copied files.
-		return;
+		setStartTime();
+		instance.daemon.query();
+		logTime("Total 5000m v 5000m query run time");
+        
+        return;
 	}
 	
 	

@@ -96,3 +96,7 @@ task copyToLib(type: Copy) {
   from buildscript.configurations.classpath
   into "lib"
 }
+
+tasks.withType(Test) {
+	jvmArgs = ['-Xms10g', '-Xmx10g']
+}
