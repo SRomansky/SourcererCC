@@ -139,6 +139,8 @@ public class SearchManager {
 	public static String queryLicenseFilePath = null;
 	public static String datasetHeaderFilePath = null;
 	public static String datasetLicenseFilePath = null;
+	
+	public static long thread_time = 0;
     
     public SearchManager(String[] args) throws IOException {
     	this.resetQueryCounters();
@@ -155,7 +157,7 @@ public class SearchManager {
             this.qcq_thread_count = Integer.parseInt(properties.getProperty("QCQ_THREADS", "1"));
             this.vcq_thread_count = Integer.parseInt(properties.getProperty("VCQ_THREADS", "1"));
             this.rcq_thread_count = Integer.parseInt(properties.getProperty("RCQ_THREADS", "1"));
-            SearchManager.min_tokens = Integer.parseInt(properties.getProperty("LEVEL_1_MIN_TOKENS", "65"));
+            SearchManager.min_tokens = Integer.parseInt(properties.getProperty("LEVEL_1_MIN_TOKENS", "65"));  // for testing, we set this to 1
             SearchManager.max_tokens = Integer.parseInt(properties.getProperty("LEVEL_1_MAX_TOKENS", "500000"));
             this.threadsToProcessBagsToSortQueue = Integer.parseInt(properties.getProperty("BTSQ_THREADS", "1"));
             this.threadToProcessIIQueue = Integer.parseInt(properties.getProperty("BTIIQ_THREADS", "1"));
@@ -317,7 +319,7 @@ public class SearchManager {
         SearchManager.queryBlockQueue = new ThreadedChannel<QueryBlock>(this.qbq_thread_count,
                 CandidateSearcher.class);
         SearchManager.queryCandidatesQueue = new ThreadedChannel<QueryCandidates>(this.qcq_thread_count,
-                CandidateProcessor.class);
+                CandidateProcessor.class); // this one
         SearchManager.verifyCandidateQueue = new ThreadedChannel<CandidatePair>(this.vcq_thread_count,
                 CloneValidator.class);
         SearchManager.reportCloneQueue = new ThreadedChannel<ClonePair>(this.rcq_thread_count, CloneReporter.class);

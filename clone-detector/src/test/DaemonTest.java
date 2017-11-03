@@ -44,7 +44,7 @@ public class DaemonTest {
 	/**
 	 * Check the daemon can start without crashing.
 	 */
-	@Test
+//	@Test
 	public void testDaemonCreate() {
 		createDaemon();
 	}
@@ -150,7 +150,7 @@ public class DaemonTest {
 	 * Check that the client can run clone detection comparing the queryset to the dataset.
 	 * Check that the report is generated properly by the client.
 	 */
-	@Test
+//	@Test
 	public void testQuery() {
 		// Assume that clone-detector/src/test/input contains valid .license, .header, .code, and dataset/*.token files.
 		// Copies the input folder contents to the query folder.
@@ -320,7 +320,7 @@ public class DaemonTest {
 		System.err.println(msg + ", time (micro seconds): " + timeDelta);
 	}
 	
-	//@Test
+	@Test
 	public void testBenchmark() {
 		// This test requires the benchmark_sets.zip file. It is not included in the github repository.
 		// The zip file should be extracted in src/test/ to make src/test/benchmark_sets
