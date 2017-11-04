@@ -150,7 +150,7 @@ public class DaemonTest {
 	 * Check that the client can run clone detection comparing the queryset to the dataset.
 	 * Check that the report is generated properly by the client.
 	 */
-	//@Test
+	@Test
 	public void testQuery() {
 		// Assume that clone-detector/src/test/input contains valid .license, .header, .code, and dataset/*.token files.
 		// Copies the input folder contents to the query folder.
@@ -160,7 +160,7 @@ public class DaemonTest {
 		// expected result: a generated report
 		
 		SearchManager instance = createDaemon();
-		
+		instance.min_tokens = 1;
 		// The daemon uses global variables from SearchManager to locate the queryset.
 //		SearchManager.queryHeaderFilePath  // overwritten by a POST message
 //		SearchManager.queryLicenseFilePath  // overwritten by a POST message
@@ -221,6 +221,7 @@ public class DaemonTest {
         // check the two maps have the same rows.
         for (Object key : erpmap.keySet()) {
         		if (null == rpmap.get(key)) {
+			    System.out.println("Expected number of rows: " + erpmap.size() + ", found: " + rpmap.size());
         			System.out.println("begin: " + key + " :end");  // the missing row.
         		}
         		assertNotNull (rpmap.get(key)); // "Missing row in report"
@@ -320,7 +321,7 @@ public class DaemonTest {
 		System.err.println(msg + ", time (micro seconds): " + timeDelta);
 	}
 	
-	@Test
+    //@Test
 	public void testBenchmark() {
 		// This test requires the benchmark_sets.zip file. It is not included in the github repository.
 		// The zip file should be extracted in src/test/ to make src/test/benchmark_sets
