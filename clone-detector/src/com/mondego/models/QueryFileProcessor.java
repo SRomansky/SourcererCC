@@ -15,26 +15,13 @@ public class QueryFileProcessor implements ITokensFileProcessor {
     @Override
     public void processLine(String line) {
         try {
-            SearchManager.queryLineQueue.send(line);
-        } catch (InstantiationException e) {
-            logger.error("EXCEPTION CAUGHT::", e);
-            e.printStackTrace();
+//            SearchManager.queryLineQueue.send(line);
+            QueryLineProcessor qlp = new QueryLineProcessor(line);
+            qlp.processLine();
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage()
                     + " skiping this query block, illegal args: "
                     + line.substring(0, 40));
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            // TODO Auto-generated catch block
-            logger.error("EXCEPTION CAUGHT::", e);
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            // TODO Auto-generated catch block
-            logger.error("EXCEPTION CAUGHT::", e);
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            // TODO Auto-generated catch block
-            logger.error("EXCEPTION CAUGHT::", e);
             e.printStackTrace();
         }
     }

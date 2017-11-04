@@ -74,10 +74,10 @@ public class SearchManager {
     private static final String ACTION_INIT = "init";
     int deletemeCounter = 0;
     public static double ramBufferSizeMB;
-    public static ThreadedChannel<String> queryLineQueue;
-    public static ThreadedChannel<QueryBlock> queryBlockQueue;
-    public static ThreadedChannel<QueryCandidates> queryCandidatesQueue;
-    public static ThreadedChannel<CandidatePair> verifyCandidateQueue;
+//    public static ThreadedChannel<String> queryLineQueue;
+//    public static ThreadedChannel<QueryBlock> queryBlockQueue;
+//    public static ThreadedChannel<QueryCandidates> queryCandidatesQueue;
+//    public static ThreadedChannel<CandidatePair> verifyCandidateQueue;
     public static ThreadedChannel<ClonePair> reportCloneQueue;
 
     public static ThreadedChannel<Bag> bagsToSortQueue;
@@ -315,13 +315,13 @@ public class SearchManager {
                 + System.lineSeparator() + " QLQ_THREADS: " + this.qlq_thread_count + " QBQ_THREADS: "
                 + this.qbq_thread_count + " QCQ_THREADS: " + this.qcq_thread_count + " VCQ_THREADS: "
                 + this.vcq_thread_count + " RCQ_THREADS: " + this.rcq_thread_count + System.lineSeparator());
-        SearchManager.queryLineQueue = new ThreadedChannel<String>(this.qlq_thread_count, QueryLineProcessor.class);
-        SearchManager.queryBlockQueue = new ThreadedChannel<QueryBlock>(this.qbq_thread_count,
-                CandidateSearcher.class);
-        SearchManager.queryCandidatesQueue = new ThreadedChannel<QueryCandidates>(this.qcq_thread_count,
-                CandidateProcessor.class); // this one
-        SearchManager.verifyCandidateQueue = new ThreadedChannel<CandidatePair>(this.vcq_thread_count,
-                CloneValidator.class);
+//        SearchManager.queryLineQueue = new ThreadedChannel<String>(this.qlq_thread_count, QueryLineProcessor.class);
+//        SearchManager.queryBlockQueue = new ThreadedChannel<QueryBlock>(this.qbq_thread_count,
+//                CandidateSearcher.class);
+//        SearchManager.queryCandidatesQueue = new ThreadedChannel<QueryCandidates>(this.qcq_thread_count,
+//                CandidateProcessor.class); // this one
+//        SearchManager.verifyCandidateQueue = new ThreadedChannel<CandidatePair>(this.vcq_thread_count,
+//                CloneValidator.class);
         SearchManager.reportCloneQueue = new ThreadedChannel<ClonePair>(this.rcq_thread_count, CloneReporter.class);
         logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
                 + System.lineSeparator() + " BQ_THREADS: " + this.threadsToProcessBagsToSortQueue
@@ -330,14 +330,14 @@ public class SearchManager {
     }
     
     public void stopQueryThreads() {
-    	SearchManager.queryLineQueue.shutdown();
-        logger.info("shutting down QLQ, " + System.currentTimeMillis());
-        logger.info("shutting down QBQ, " + (System.currentTimeMillis()));
-        SearchManager.queryBlockQueue.shutdown();
-        logger.info("shutting down QCQ, " + System.currentTimeMillis());
-        SearchManager.queryCandidatesQueue.shutdown();
-        logger.info("shutting down VCQ, " + System.currentTimeMillis());
-        SearchManager.verifyCandidateQueue.shutdown();
+//    	SearchManager.queryLineQueue.shutdown();
+//        logger.info("shutting down QLQ, " + System.currentTimeMillis());
+//        logger.info("shutting down QBQ, " + (System.currentTimeMillis()));
+//        SearchManager.queryBlockQueue.shutdown();
+//        logger.info("shutting down QCQ, " + System.currentTimeMillis());
+//        SearchManager.queryCandidatesQueue.shutdown();
+//        logger.info("shutting down VCQ, " + System.currentTimeMillis());
+//        SearchManager.verifyCandidateQueue.shutdown();
         logger.info("shutting down RCQ, " + System.currentTimeMillis());
         SearchManager.reportCloneQueue.shutdown();
     }

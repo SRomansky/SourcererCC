@@ -62,7 +62,7 @@ public class CandidateProcessor implements IListener, Runnable {
         }
     }
 
-    private void processResultWithFilter() throws InterruptedException, InstantiationException, IllegalAccessException,
+    public void processResultWithFilter() throws InterruptedException, InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         // System.out.println("HERE, thread_id: " + Util.debug_thread() +
         // ", query_id "+ queryBlock.getId());
@@ -72,36 +72,8 @@ public class CandidateProcessor implements IListener, Runnable {
         logger.debug(
                 SearchManager.NODE_PREFIX + ", num candidates: " + simMap.entrySet().size() + ", query: " + queryBlock);
         
-        /*
-        for (Entry<Long, CandidateSimInfo> entry : simMap.entrySet()) { // looks like most of run time is here.
-            long startTime = System.nanoTime();
-            CandidateSimInfo simInfo = entry.getValue();
-            long candidateId = simInfo.doc.fId;
-            long functionIdCandidate = simInfo.doc.pId;
-            int newCt = -1;
-            int candidateSize = simInfo.doc.size;
-            if (candidateSize < queryBlock.getComputedThreshold() || candidateSize > queryBlock.getMaxCandidateSize()) {
-                continue; // ignore this candidate
-            }
-            if (candidateSize > queryBlock.getSize()) {
-                newCt = simInfo.doc.ct;
-            }
-            CandidatePair candidatePair = null;
-            if (newCt != -1) {
-                candidatePair = new CandidatePair(queryBlock, simInfo, newCt, candidateSize,
-                        functionIdCandidate, candidateId);
-            } else {
-                candidatePair = new CandidatePair(queryBlock, simInfo,
-                        queryBlock.getComputedThreshold(), candidateSize, functionIdCandidate, candidateId);
-            }
-            long estimatedTime = System.nanoTime() - startTime;
-             logger.debug(SearchManager.NODE_PREFIX + " CandidateProcessor, " + candidatePair + " in " +
-             estimatedTime/1000 + " micros");
-            SearchManager.verifyCandidateQueue.send(candidatePair);
-            entry = null;
-        }*/
-        
-        simMap.entrySet().parallelStream().forEach((entry) -> {
+//        simMap.entrySet().parallelStream().forEach((entry) -> {
+        simMap.entrySet().stream().forEach((entry) -> {
         	CandidateSimInfo simInfo = entry.getValue();
         	long candidateId = simInfo.doc.fId;
             long functionIdCandidate = simInfo.doc.pId;
@@ -124,31 +96,15 @@ public class CandidateProcessor implements IListener, Runnable {
                         queryBlock.getComputedThreshold(), candidateSize, functionIdCandidate, candidateId);
             }
             
-            try {
-				//SearchManager.verifyCandidateQueue.send(candidatePair);
-            	CloneValidator.validate(candidatePair);
-			} catch (InstantiationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+            	try {
+					CloneValidator.validate(candidatePair);
+				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+						| InvocationTargetException | NoSuchMethodException | SecurityException
+						| InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			
         });
         
         logger.debug(SearchManager.NODE_PREFIX + " total CandidateProcessor: " + (System.nanoTime() - sstart_time));

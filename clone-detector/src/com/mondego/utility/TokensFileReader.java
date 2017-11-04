@@ -5,7 +5,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +32,7 @@ public class TokensFileReader {
 
     public void read() throws FileNotFoundException, IOException, ParseException {
         BufferedReader br = new BufferedReader(new FileReader(file));
+        List<String> fileContents = new ArrayList<String>();
         String line;
         long lineNumber = 0;
         char[] buf = new char[40];
@@ -58,7 +62,8 @@ public class TokensFileReader {
                     long estimatedTime = System.nanoTime() - startTime;
                     logger.debug(this.nodeId + " RL " + lineNumber + ", file " + prefix + " in " + estimatedTime / 1000
                             + " micros");
-                    this.processor.processLine(prefix + line);
+//                    this.processor.processLine(prefix + line);
+                    fileContents.add(prefix + line); // doesn't seem to help performance
 
                 }
             }
@@ -71,6 +76,16 @@ public class TokensFileReader {
                 // true);
             }
         }
+        
+        fileContents.stream().forEach((fileLine) -> {
+        	try {
+				this.processor.processLine(fileLine);
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        });
+        
         if (SearchManager.ACTION_SEARCH.equals(SearchManager.ACTION)) {
             // Util.writeToFile(SearchManager.recoveryWriter, lineNumber + "",
             // true);
