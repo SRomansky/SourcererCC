@@ -9,12 +9,16 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.text.ParseException;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,6 +51,7 @@ public class CloneHelper {
     private final Integer MUL_FACTOR = 100;
     private Map<String, Integer> globalIdentifierMap;
     private static final Logger logger = LogManager.getLogger(CloneHelper.class);
+    private Pattern strip;
 
     /**
      * 
@@ -56,6 +61,8 @@ public class CloneHelper {
         this.comparisions = 0;
         this.numClonesFound = 0;
         this.globalIdentifierMap = new HashMap<String, Integer>();
+        this.strip = Pattern.compile("(\'|\"|\\\\)");
+
     }
 
     /**
@@ -213,30 +220,48 @@ public class CloneHelper {
     }
 
     private void parseAndPopulateBag(Bag bag, String inputString) {
-        Scanner scanner = new Scanner(inputString);
-        scanner.useDelimiter(",");
-        while (scanner.hasNext()) {
-            String tokenFreq = scanner.next();
-            String[] tokenAndFreq = tokenFreq.split("@@::@@");
-            String tokenStr = this.strip(tokenAndFreq[0]).trim();
-            if (tokenStr.length() > 0) {
-                Token token = new Token(tokenStr);
-                TokenFrequency tokenFrequency = new TokenFrequency();
-                tokenFrequency.setToken(token);
-                try {
-                    tokenFrequency.setFrequency(Integer.parseInt(tokenAndFreq[1]));
-                    bag.add(tokenFrequency);
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    logger.error("EXCEPTION CAUGHT, token: " + token);
-                    // System.out.println("EXCEPTION CAUGHT, tokenFreq: "+
-                    // tokenAndFreq[1]);
-                    logger.error("EXCEPTION CAUGHT: " + inputString);
-                } catch (NumberFormatException e) {
-                    logger.error("EXCEPTION CAUGHT: " + inputString + " " + e.getMessage());
-                }
-            }
-        }
-        scanner.close();
+    		TokenFrequency[] frequencies = Arrays.stream(inputString.split(","))
+    			.map(tokenFreq -> tokenFreq.split("@@::@@"))
+    			.map(pair -> {
+    				String tokenString = this.strip(pair[0]).trim();
+    				if (tokenString.length() > 0) {
+    					Token token = new Token(tokenString);
+    					TokenFrequency tokenFrequency = new TokenFrequency();
+    					tokenFrequency.setToken(token);
+
+    					tokenFrequency.setFrequency(Integer.parseInt(pair[1]));
+    					return tokenFrequency;
+    					//bag.add(tokenFrequency);
+    				}
+    				return null; // ????
+    		    })
+    			.toArray(TokenFrequency[]::new);
+    		bag.addAll(Arrays.asList(frequencies));
+    	
+//        Scanner scanner = new Scanner(inputString);
+//        scanner.useDelimiter(",");
+//        while (scanner.hasNext()) {
+//            String tokenFreq = scanner.next();
+//            String[] tokenAndFreq = tokenFreq.split("@@::@@");
+//            String tokenStr = this.strip(tokenAndFreq[0]).trim();
+//            if (tokenStr.length() > 0) {
+//                Token token = new Token(tokenStr);
+//                TokenFrequency tokenFrequency = new TokenFrequency();
+//                tokenFrequency.setToken(token);
+//                try {
+//                    tokenFrequency.setFrequency(Integer.parseInt(tokenAndFreq[1]));
+//                    bag.add(tokenFrequency);
+//                } catch (ArrayIndexOutOfBoundsException e) {
+//                    logger.error("EXCEPTION CAUGHT, token: " + token);
+//                    // System.out.println("EXCEPTION CAUGHT, tokenFreq: "+
+//                    // tokenAndFreq[1]);
+//                    logger.error("EXCEPTION CAUGHT: " + inputString);
+//                } catch (NumberFormatException e) {
+//                    logger.error("EXCEPTION CAUGHT: " + inputString + " " + e.getMessage());
+//                }
+//            }
+//        }
+//        scanner.close();
     }
 
     /*
@@ -309,40 +334,58 @@ public class CloneHelper {
 
     private void parseAndPopulateQueryBlock(List<Entry<String, TokenInfo>> listOfTokens, String inputString,
             String delimeterTokenFreq, String delimeterTokenAndFreq) {
+    	
+    		Entry[] entries = Arrays.stream(inputString.split(delimeterTokenFreq))
+    			.map(f -> f.split(delimeterTokenAndFreq))
+    			.map(pair -> {
+    				String tokenString = this.strip(pair[0]).trim();
+    				
+    				if (tokenString.length() == 0) return null;
+    				
+    				TokenInfo tokenInfo = new TokenInfo(Integer.parseInt(pair[1]));
+    				Entry<String, TokenInfo> entry = new AbstractMap.SimpleEntry<String, TokenInfo>(tokenString, tokenInfo);
+    				
+    				return entry;
+    			})
+    			.toArray(Entry[]::new);
+    		
+    		listOfTokens.addAll(new ArrayList(Arrays.asList(entries)));
+    	
         // int queryBlockSize = 0;
-        Scanner scanner = new Scanner(inputString);
-        scanner.useDelimiter(delimeterTokenFreq);
-        String tokenFreq = null;
-        String[] tokenAndFreq = null;
-        String tokenStr = null;
-        while (scanner.hasNext()) {
-            tokenFreq = scanner.next();
-            tokenAndFreq = tokenFreq.split(delimeterTokenAndFreq);
-            tokenStr = this.strip(tokenAndFreq[0]).trim();
-            if (tokenStr.length() > 0) {
-                try {
-                    TokenInfo tokenInfo = new TokenInfo(Integer.parseInt(tokenAndFreq[1]));
-                    Entry<String, TokenInfo> entry = new AbstractMap.SimpleEntry<String, TokenInfo>(tokenStr,
-                            tokenInfo);
-                    listOfTokens.add(entry);
-                    // queryBlockSize += tokenInfo.getFrequency();
-
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    logger.error("EXCEPTION CAUGHT, token: " + tokenStr + "," + e.getMessage());
-                    // System.out.println("EXCEPTION CAUGHT, tokenFreq: "+
-                    // tokenAndFreq[1]);
-                    logger.error("EXCEPTION CAUGHT, inputString : " + inputString + "," + e.getMessage());
-                } catch (NumberFormatException e) {
-                    logger.error("EXCEPTION CAUGHT, inputString : " + inputString + "," + e.getMessage());
-                }
-            }
-
-        }
-        scanner.close();
+//        Scanner scanner = new Scanner(inputString);
+//        scanner.useDelimiter(delimeterTokenFreq);
+//        String tokenFreq = null;
+//        String[] tokenAndFreq = null;
+//        String tokenStr = null;
+//        while (scanner.hasNext()) {
+//            tokenFreq = scanner.next();
+//            tokenAndFreq = tokenFreq.split(delimeterTokenAndFreq);
+//            tokenStr = this.strip(tokenAndFreq[0]).trim();
+//            if (tokenStr.length() > 0) {
+//                try {
+//                    TokenInfo tokenInfo = new TokenInfo(Integer.parseInt(tokenAndFreq[1]));
+//                    Entry<String, TokenInfo> entry = new AbstractMap.SimpleEntry<String, TokenInfo>(tokenStr,
+//                            tokenInfo);
+//                    listOfTokens.add(entry);
+//                    // queryBlockSize += tokenInfo.getFrequency();
+//
+//                } catch (ArrayIndexOutOfBoundsException e) {
+//                    logger.error("EXCEPTION CAUGHT, token: " + tokenStr + "," + e.getMessage());
+//                    // System.out.println("EXCEPTION CAUGHT, tokenFreq: "+
+//                    // tokenAndFreq[1]);
+//                    logger.error("EXCEPTION CAUGHT, inputString : " + inputString + "," + e.getMessage());
+//                } catch (NumberFormatException e) {
+//                    logger.error("EXCEPTION CAUGHT, inputString : " + inputString + "," + e.getMessage());
+//                }
+//            }
+//
+//        }
+//        scanner.close();
     }
 
     private String strip(String str) {
-        return str.replaceAll("(\'|\"|\\\\)", "");
+    		return this.strip.matcher(str).replaceAll("");
+//        return str.replaceAll("(\'|\"|\\\\)", "");
     }
 
     /**
