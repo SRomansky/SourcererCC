@@ -8,12 +8,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.util.ConcurrentHashSet;
 
 import com.mondego.indexbased.SearchManager;
 import com.mondego.utility.Util;
@@ -70,16 +67,6 @@ public class CandidateSearcher implements IListener, Runnable {
         }
     }
 
-    public void searchCandidates() {
-    	try {
-			this.searchCandidates(this.queryBlock);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException | IOException | InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
-    
     private void searchCandidates(QueryBlock queryBlock)
             throws IOException, InterruptedException, InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
@@ -91,29 +78,21 @@ public class CandidateSearcher implements IListener, Runnable {
             long estimatedTime = System.nanoTime() - startTime;
             logger.debug(SearchManager.NODE_PREFIX + " CandidateSearcher, QueryBlock " + queryBlock + " in "
                     + estimatedTime / 1000 + " micros");
-//            SearchManager.queryCandidatesQueue.send(qc);
-            CandidateProcessor cp = new CandidateProcessor(qc);
-            cp.processResultWithFilter();
+            SearchManager.queryCandidatesQueue.send(qc);
         }
     }
 
-    // performance heavy function
     private Map<Long, CandidateSimInfo> search(QueryBlock queryBlock) {
-        Map<Long, CandidateSimInfo> simMap = new ConcurrentHashMap<Long, CandidateSimInfo>();
-        Set<Long> earlierDocs = new ConcurrentHashSet<Long>();
-//        int termsSeenInQuery = 0;
-        AtomicInteger termsSeenInQuery = new AtomicInteger();
-        
+        Map<Long, CandidateSimInfo> simMap = new HashMap<Long, CandidateSimInfo>();
+        Set<Long> earlierDocs = new HashSet<Long>();
+        int termsSeenInQuery = 0;
         for (Entry<String, TokenInfo> entry : queryBlock.getPrefixMap().entrySet()) {
-//        queryBlock.getPrefixMap().entrySet().parallelStream().forEach(entry -> {
             String searchTerm = entry.getKey();
             int searchTermFreq = entry.getValue().getFrequency();
-//            termsSeenInQuery += searchTermFreq;
-            termsSeenInQuery.getAndAdd(searchTermFreq);
+            termsSeenInQuery += searchTermFreq;
             Set<Long> docIds = SearchManager.invertedIndex.get(searchTerm);
             if (null != docIds) {
                 for (Long docId : docIds) {
-//            	docIds.parallelStream().forEach(docId -> {
                     CandidateSimInfo simInfo = null;
                     DocumentForInvertedIndex doc = SearchManager.documentsForII.get(docId);
                     if (simMap.containsKey(docId)) {
@@ -136,10 +115,10 @@ public class CandidateSearcher implements IListener, Runnable {
                         // Util.debug_thread());
                         simMap.put(doc.id, simInfo);
                     }
-                    simInfo.queryMatchPosition = termsSeenInQuery.get();
+                    simInfo.queryMatchPosition = termsSeenInQuery;
                     int candidatePos = doc.termInfoMap.get(searchTerm).position;
                     simInfo.candidateMatchPosition = candidatePos + doc.termInfoMap.get(searchTerm).frequency;
-                    if (!Util.isSatisfyPosFilter(simMap.get(doc.id).similarity, queryBlock.getSize(), termsSeenInQuery.get(),
+                    if (!Util.isSatisfyPosFilter(simMap.get(doc.id).similarity, queryBlock.getSize(), termsSeenInQuery,
                             simInfo.candidateSize, simInfo.candidateMatchPosition, queryBlock.getComputedThreshold())) {
                         simMap.remove(doc.id);
                     }
@@ -148,7 +127,6 @@ public class CandidateSearcher implements IListener, Runnable {
                 //logger.debug("no docs found for searchTerm: " + searchTerm);
             }
         }
-        
         return simMap;
     }
 

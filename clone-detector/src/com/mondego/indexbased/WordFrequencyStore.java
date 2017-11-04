@@ -84,7 +84,7 @@ public class WordFrequencyStore implements ITokensFileProcessor {
         this.lineNumber++;
     }
 
-    private void populateWordFreqMap(Bag bag) { // XXX here
+    private void populateWordFreqMap(Bag bag) {
         for (TokenFrequency tf : bag) {
             String tokenStr = tf.getToken().getValue();
             if (this.wordFreq.containsKey(tokenStr)) {

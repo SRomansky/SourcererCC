@@ -173,7 +173,7 @@ public class Daemon {
     		// create gtpm index
     		WordFrequencyStore wfs = new WordFrequencyStore();
     		try {
-    			wfs.populateLocalWordFreqMap();  // this uses the QueryFileProcessor maybe
+    			wfs.populateLocalWordFreqMap();
     		} catch (IOException | ParseException e1) {
     			// TODO Auto-generated catch block
     			e1.printStackTrace();
