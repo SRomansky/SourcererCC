@@ -97,8 +97,11 @@ public class CandidateSearcher implements IListener, Runnable {
                     DocumentForInvertedIndex doc = SearchManager.documentsForII.get(docId);
 
 		    float pctThreshold = (SearchManager.th / SearchManager.MUL_FACTOR) / 10;  // (800 / 100) / 10 = 0.8;
-		    if (doc.size < queryBlock.getSize() * pctThreshold - 1 ||
-			doc.size > (2 - pctThreshold) * queryBlock.getSize() + 1)
+		    int smallerDoc = Math.min(doc.size, queryBlock.getSize());
+		    int largerDoc = Math.max(doc.size, queryBlock.getSize());
+		    
+		    if (smallerDoc < largerDoc * pctThreshold - 2) // ||
+			//smallerDoc > (2 - pctThreshold) * largerDoc + 2)
 			continue;
 		    
                     if (simMap.containsKey(docId)) {

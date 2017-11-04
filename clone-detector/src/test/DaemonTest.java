@@ -160,7 +160,7 @@ public class DaemonTest {
 		// expected result: a generated report
 		
 		SearchManager instance = createDaemon();
-		instance.min_tokens = 1;
+		SearchManager.min_tokens = 1;
 		// The daemon uses global variables from SearchManager to locate the queryset.
 //		SearchManager.queryHeaderFilePath  // overwritten by a POST message
 //		SearchManager.queryLicenseFilePath  // overwritten by a POST message
@@ -222,6 +222,10 @@ public class DaemonTest {
 
         // check the two maps have the same rows.
         for (Object key : erpmap.keySet()) {
+        		Pattern p = Pattern.compile("<pre><code class=\"language-python\">null</code></pre>", Pattern.LITERAL);
+        		if (p.matcher((String) key).find()) // p.matcher((String) key).)
+        			continue;
+        	
         		if (null == rpmap.get(key)) {
         			System.out.println("begin: " + key + " :end");  // the missing row.
         		}
