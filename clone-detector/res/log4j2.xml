@@ -19,7 +19,7 @@
   </Appenders>
  
   <Loggers>
-    <Logger name="com.mondego" level="debug" additivity="false">
+    <Logger name="com.mondego" level="error" additivity="false">
       <AppenderRef ref="sccRollingFile"/>
     </Logger>
  
