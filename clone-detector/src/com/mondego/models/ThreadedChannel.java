@@ -26,11 +26,11 @@ public class ThreadedChannel<E> {
     public void send(E e) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
             InvocationTargetException, NoSuchMethodException, SecurityException {
         final Runnable o = this.workerType.getDeclaredConstructor(e.getClass()).newInstance(e);
-//        try {
-//            semaphore.acquire();
-//        } catch (InterruptedException ex) {
-//            logger.error("Caught interrupted exception " + ex);
-//        }
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException ex) {
+            logger.error("Caught interrupted exception " + ex);
+        }
 
         try {
             executor.execute(new Runnable() {
