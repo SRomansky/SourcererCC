@@ -218,10 +218,11 @@ public class DaemonTest {
         for (String row : erp) {
         		erpmap.put(row, true);
         }
+	    System.out.println("Expected number of rows: " + erpmap.size() + ", found: " + rpmap.size());
+
         // check the two maps have the same rows.
         for (Object key : erpmap.keySet()) {
         		if (null == rpmap.get(key)) {
-			    System.out.println("Expected number of rows: " + erpmap.size() + ", found: " + rpmap.size());
         			System.out.println("begin: " + key + " :end");  // the missing row.
         		}
         		assertNotNull (rpmap.get(key)); // "Missing row in report"

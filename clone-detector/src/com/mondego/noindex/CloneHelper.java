@@ -235,6 +235,7 @@ public class CloneHelper {
     				}
     				return null; // ????
     		    })
+    			.filter(f -> f != null)
     			.toArray(TokenFrequency[]::new);
     		bag.addAll(Arrays.asList(frequencies));
     	
@@ -347,6 +348,7 @@ public class CloneHelper {
     				
     				return entry;
     			})
+    			.filter(f -> f != null)
     			.toArray(Entry[]::new);
     		
     		listOfTokens.addAll(new ArrayList(Arrays.asList(entries)));
