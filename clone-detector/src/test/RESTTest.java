@@ -40,7 +40,7 @@ public class RESTTest {
 		instance.server.stop();
 	}
 	
-//	@Test
+	@Test
 	public void testStatus() {
 		// XXX This test is bad. There will be variance in runtime based on what is running it.
 		Client client = ClientBuilder.newClient();

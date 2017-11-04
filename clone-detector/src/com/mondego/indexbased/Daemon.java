@@ -284,9 +284,6 @@ public class Daemon {
         }
         sm.stopQueryThreads();
         setState(State.IDLE);
-        logger.debug("Time in thread: " + SearchManager.thread_time + " nano seconds");
-        SearchManager.thread_time = 0;
-        
 	}
     
     public Path getPostFile(File uploadDirectory, Request req) {

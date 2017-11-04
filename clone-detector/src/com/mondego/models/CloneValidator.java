@@ -58,7 +58,7 @@ public class CloneValidator implements IListener, Runnable {
         }
     }
 
-    public static void validate(CandidatePair candidatePair)
+    private void validate(CandidatePair candidatePair)
             throws InterruptedException, InstantiationException, IllegalAccessException, IllegalArgumentException,
             InvocationTargetException, NoSuchMethodException, SecurityException {
         /*
@@ -80,7 +80,7 @@ public class CloneValidator implements IListener, Runnable {
              * queryBlock.getId()); logger.debug("cid: "+
              * candidatePair.functionIdCandidate+","+candidatePair.candidateId);
              */
-            int similarity = updateSimilarity(candidatePair.queryBlock,
+            int similarity = this.updateSimilarity(candidatePair.queryBlock,
                     candidatePair.computedThreshold, candidatePair.candidateSize, candidatePair.simInfo);
             if (similarity > 0) {
                 ClonePair cp = new ClonePair(candidatePair.queryBlock.getFunctionId(), candidatePair.queryBlock.getId(),
@@ -103,7 +103,7 @@ public class CloneValidator implements IListener, Runnable {
         }
     }
 
-    private static int updateSimilarity(QueryBlock queryBlock,
+    private int updateSimilarity(QueryBlock queryBlock,
             int computedThreshold, int candidateSize, CandidateSimInfo simInfo) {
         int tokensSeenInCandidate = 0;
         int similarity = simInfo.similarity;
@@ -151,7 +151,7 @@ public class CloneValidator implements IListener, Runnable {
         return -1;
     }
 
-    private static int updateSimilarityHelper(CandidateSimInfo simInfo, TokenInfo tokenInfo, int similarity,
+    private int updateSimilarityHelper(CandidateSimInfo simInfo, TokenInfo tokenInfo, int similarity,
             int candidatesTokenFreq, String token) {
         simInfo.queryMatchPosition = tokenInfo.getPosition();
         similarity += Math.min(tokenInfo.getFrequency(), candidatesTokenFreq);

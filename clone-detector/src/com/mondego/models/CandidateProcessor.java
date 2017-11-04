@@ -68,12 +68,10 @@ public class CandidateProcessor implements IListener, Runnable {
         // ", query_id "+ queryBlock.getId());
         Map<Long, CandidateSimInfo> simMap = this.qc.simMap;
         QueryBlock queryBlock = this.qc.queryBlock;
-        long sstart_time = System.nanoTime();
+        long sstart_time = System.currentTimeMillis();
         logger.debug(
                 SearchManager.NODE_PREFIX + ", num candidates: " + simMap.entrySet().size() + ", query: " + queryBlock);
-        
-        /*
-        for (Entry<Long, CandidateSimInfo> entry : simMap.entrySet()) { // looks like most of run time is here.
+        for (Entry<Long, CandidateSimInfo> entry : simMap.entrySet()) {
             long startTime = System.nanoTime();
             CandidateSimInfo simInfo = entry.getValue();
             long candidateId = simInfo.doc.fId;
@@ -95,64 +93,12 @@ public class CandidateProcessor implements IListener, Runnable {
                         queryBlock.getComputedThreshold(), candidateSize, functionIdCandidate, candidateId);
             }
             long estimatedTime = System.nanoTime() - startTime;
-             logger.debug(SearchManager.NODE_PREFIX + " CandidateProcessor, " + candidatePair + " in " +
-             estimatedTime/1000 + " micros");
+            // System.out.println(SearchManager.NODE_PREFIX + "
+            // CandidateProcessor, " + candidatePair + " in " +
+            // estimatedTime/1000 + " micros");
             SearchManager.verifyCandidateQueue.send(candidatePair);
             entry = null;
-        }*/
-        
-        simMap.entrySet().parallelStream().forEach((entry) -> {
-        	CandidateSimInfo simInfo = entry.getValue();
-        	long candidateId = simInfo.doc.fId;
-            long functionIdCandidate = simInfo.doc.pId;
-            int newCt = -1;
-            int candidateSize = simInfo.doc.size;
-            
-            if (candidateSize < queryBlock.getComputedThreshold() || candidateSize > queryBlock.getMaxCandidateSize()) {
-                return; // ignore this candidate
-            }
-            
-            if (candidateSize > queryBlock.getSize()) {
-                newCt = simInfo.doc.ct;
-            }
-            CandidatePair candidatePair = null;
-            if (newCt != -1) {
-                candidatePair = new CandidatePair(queryBlock, simInfo, newCt, candidateSize,
-                        functionIdCandidate, candidateId);
-            } else {
-                candidatePair = new CandidatePair(queryBlock, simInfo,
-                        queryBlock.getComputedThreshold(), candidateSize, functionIdCandidate, candidateId);
-            }
-            
-            try {
-				//SearchManager.verifyCandidateQueue.send(candidatePair);
-            	CloneValidator.validate(candidatePair);
-			} catch (InstantiationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        });
-        
-        logger.debug(SearchManager.NODE_PREFIX + " total CandidateProcessor: " + (System.nanoTime() - sstart_time));
-        SearchManager.thread_time += System.nanoTime() - sstart_time;
+        }
     }
 
 }
