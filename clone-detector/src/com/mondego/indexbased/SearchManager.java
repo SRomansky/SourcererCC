@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -347,8 +348,9 @@ public class SearchManager {
 //        SearchManager.verifyCandidateQueue.shutdown();
 //        logger.info("shutting down RCQ, " + System.currentTimeMillis());
 //        SearchManager.reportCloneQueue.shutdown();
-        SearchManager.queryLineQueue.shutdown();
-        this.pool = new ThreadedChannel<Object>(20);
+//        SearchManager.queryLineQueue.shutdown();
+//        this.pool = new ThreadedChannel<Object>(20);
+        this.pool.finish();
     }
     
     
@@ -423,57 +425,93 @@ public class SearchManager {
         long gig = 1000000000l;
         long maxMemory = this.max_index_size*gig;
         int completedLines = 0;
+        
+        SearchManager.bagsToInvertedIndexQueue = this.pool;
+        ArrayList<String> lines = new ArrayList<String>();
+        
         try {
-            // SearchManager.bagsToSortQueue = new ThreadedChannel<Bag>(
-            // this.threadsToProcessBagsToSortQueue, BagSorter.class);
-            SearchManager.bagsToInvertedIndexQueue = this.pool; //new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
-                    //InvertedIndexCreator.class);
-            while ((line = br.readLine()) != null && line.trim().length() > 0) {
-                completedLines++;
-                if (completedLines <= avoidLines) {
-                    continue;
-                }
-                Bag bag = theInstance.cloneHelper.deserialise(line);
-                if (null != bag) {
-                    size = size + (bag.getNumUniqueTokens() * 300); // approximate mem utilization. 1 key value pair = 300 bytes
-                    logger.debug("indexing "+ completedLines + " bag: "+ bag + ", mem: "+size + " bytes");
-                    SearchManager.bagsToInvertedIndexQueue.send(bag);
-                    if (size >= maxMemory) {
-                        return completedLines;
-                    }
-                }
-            }
+			while ((line = br.readLine()) != null && line.trim().length() > 0) {
+				completedLines++;
+				if (completedLines <= avoidLines)
+					continue;
+				lines.add(line);
+			}
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+        
+        try {
+        	br.close();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IllegalArgumentException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (SecurityException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } finally {
-            // SearchManager.bagsToSortQueue.shutdown();
-            SearchManager.bagsToInvertedIndexQueue.shutdown();
-            this.pool = new ThreadedChannel<Object>(20);
-            try {
-                br.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        	e.printStackTrace();
         }
+        
+        lines.stream()
+        		.map(l -> theInstance.cloneHelper.deserialise(l))
+        		.filter(bag -> bag != null)
+        		.forEach(bag -> {
+        		try {
+					SearchManager.bagsToInvertedIndexQueue.send(bag);
+				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+						| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+        });
+        
+        
+//        try {
+//            // SearchManager.bagsToSortQueue = new ThreadedChannel<Bag>(
+//            // this.threadsToProcessBagsToSortQueue, BagSorter.class);
+//            SearchManager.bagsToInvertedIndexQueue = this.pool; //new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
+//                    //InvertedIndexCreator.class);
+//            while ((line = br.readLine()) != null && line.trim().length() > 0) {
+//                completedLines++;
+//                if (completedLines <= avoidLines) {
+//                    continue;
+//                }
+//                Bag bag = theInstance.cloneHelper.deserialise(line);
+//                if (null != bag) {
+//                    size = size + (bag.getNumUniqueTokens() * 300); // approximate mem utilization. 1 key value pair = 300 bytes
+//                    logger.debug("indexing "+ completedLines + " bag: "+ bag + ", mem: "+size + " bytes");
+//                    SearchManager.bagsToInvertedIndexQueue.send(bag);
+//                    if (size >= maxMemory) {
+//                        return completedLines;
+//                    }
+//                }
+//            }
+//        } catch (IOException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (InstantiationException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (IllegalAccessException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (IllegalArgumentException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (InvocationTargetException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (NoSuchMethodException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (SecurityException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } finally {
+//            // SearchManager.bagsToSortQueue.shutdown();
+////            SearchManager.bagsToInvertedIndexQueue.shutdown();
+////            this.pool = new ThreadedChannel<Object>(20);
+//            try {
+//                br.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
         return -1;
     }
 

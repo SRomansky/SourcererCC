@@ -27,6 +27,14 @@ public class ThreadedChannel<E> {
         this.semaphore = new Semaphore(nThreads);
     }
 
+    /**
+     * complete all of the current tasks
+     */
+    public void finish() {
+    		this.shutdown();
+    		this.executor = Executors.newFixedThreadPool(5);
+    }
+    
     public void send(E e) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
             InvocationTargetException, NoSuchMethodException, SecurityException {
 //    	final Runnable o = (Runnable) e;
