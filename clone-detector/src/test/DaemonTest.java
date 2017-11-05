@@ -251,9 +251,12 @@ public class DaemonTest {
 		try {
 			// clean up data
 			FileUtils.cleanDirectory(new File(SearchManager.QUERY_DIR_PATH));
-			FileUtils.forceDelete(new File(SearchManager.QUERY_SRC_DIR));
-			FileUtils.forceDelete(new File(SearchManager.queryHeaderFilePath));
-			FileUtils.forceDelete(new File(SearchManager.queryLicenseFilePath));
+			if (new File(SearchManager.QUERY_SRC_DIR).exists())
+				FileUtils.forceDelete(new File(SearchManager.QUERY_SRC_DIR));
+			if (new File(SearchManager.queryHeaderFilePath).exists())
+				FileUtils.forceDelete(new File(SearchManager.queryHeaderFilePath));
+			if (new File(SearchManager.queryLicenseFilePath).exists())
+				FileUtils.forceDelete(new File(SearchManager.queryLicenseFilePath));
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			fail("Failed to clean test files.");
