@@ -74,14 +74,14 @@ public class SearchManager {
     private static final String ACTION_INIT = "init";
     int deletemeCounter = 0;
     public static double ramBufferSizeMB;
-    public static ThreadedChannel<String> queryLineQueue;
-    public static ThreadedChannel<QueryBlock> queryBlockQueue;
-    public static ThreadedChannel<QueryCandidates> queryCandidatesQueue;
-    public static ThreadedChannel<CandidatePair> verifyCandidateQueue;
-    public static ThreadedChannel<ClonePair> reportCloneQueue;
+    public static ThreadedChannel<Object> queryLineQueue;
+    public static ThreadedChannel<Object> queryBlockQueue;
+    public static ThreadedChannel<Object> queryCandidatesQueue;
+    public static ThreadedChannel<Object> verifyCandidateQueue;
+    public static ThreadedChannel<Object> reportCloneQueue;
 
     public static ThreadedChannel<Bag> bagsToSortQueue;
-    public static ThreadedChannel<Bag> bagsToInvertedIndexQueue;
+    public static ThreadedChannel<Object> bagsToInvertedIndexQueue;
     public static ThreadedChannel<Bag> bagsToForwardIndexQueue;
     public static SearchManager theInstance;
     public static List<IndexWriter> indexerWriters;
@@ -93,6 +93,8 @@ public class SearchManager {
     public static EProperties getProperties() {
     	return properties;
     }
+    
+    private ThreadedChannel<Object> pool = new ThreadedChannel<Object>(20);
     
     public static Object lock = new Object();
     private int qlq_thread_count;
@@ -313,31 +315,40 @@ public class SearchManager {
                 + System.lineSeparator() + " QLQ_THREADS: " + this.qlq_thread_count + " QBQ_THREADS: "
                 + this.qbq_thread_count + " QCQ_THREADS: " + this.qcq_thread_count + " VCQ_THREADS: "
                 + this.vcq_thread_count + " RCQ_THREADS: " + this.rcq_thread_count + System.lineSeparator());
-        SearchManager.queryLineQueue = new ThreadedChannel<String>(this.qlq_thread_count, QueryLineProcessor.class);
-        SearchManager.queryBlockQueue = new ThreadedChannel<QueryBlock>(this.qbq_thread_count,
-                CandidateSearcher.class);
-        SearchManager.queryCandidatesQueue = new ThreadedChannel<QueryCandidates>(this.qcq_thread_count,
-                CandidateProcessor.class);
-        SearchManager.verifyCandidateQueue = new ThreadedChannel<CandidatePair>(this.vcq_thread_count,
-                CloneValidator.class);
-        SearchManager.reportCloneQueue = new ThreadedChannel<ClonePair>(this.rcq_thread_count, CloneReporter.class);
+//        SearchManager.queryLineQueue = new ThreadedChannel<String>(this.qlq_thread_count, QueryLineProcessor.class);
+//        SearchManager.queryBlockQueue = new ThreadedChannel<QueryBlock>(this.qbq_thread_count,
+//                CandidateSearcher.class);
+//        SearchManager.queryCandidatesQueue = new ThreadedChannel<QueryCandidates>(this.qcq_thread_count,
+//                CandidateProcessor.class);
+//        SearchManager.verifyCandidateQueue = new ThreadedChannel<CandidatePair>(this.vcq_thread_count,
+//                CloneValidator.class);
+//        SearchManager.reportCloneQueue = new ThreadedChannel<ClonePair>(this.rcq_thread_count, CloneReporter.class);
         logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
                 + System.lineSeparator() + " BQ_THREADS: " + this.threadsToProcessBagsToSortQueue
                 + System.lineSeparator() + " SBQ_THREADS: " + this.threadToProcessIIQueue + System.lineSeparator()
                 + " IIQ_THREADS: " + this.threadsToProcessFIQueue + System.lineSeparator());
+        SearchManager.queryLineQueue = this.pool;
+        SearchManager.queryBlockQueue = SearchManager.queryLineQueue;
+        SearchManager.queryCandidatesQueue = SearchManager.queryLineQueue;
+        SearchManager.verifyCandidateQueue = SearchManager.queryLineQueue;
+        SearchManager.reportCloneQueue = SearchManager.queryLineQueue;
+        
+    
     }
     
     public void stopQueryThreads() {
-    	SearchManager.queryLineQueue.shutdown();
+//    	SearchManager.queryLineQueue.shutdown();
         logger.info("shutting down QLQ, " + System.currentTimeMillis());
         logger.info("shutting down QBQ, " + (System.currentTimeMillis()));
-        SearchManager.queryBlockQueue.shutdown();
-        logger.info("shutting down QCQ, " + System.currentTimeMillis());
-        SearchManager.queryCandidatesQueue.shutdown();
-        logger.info("shutting down VCQ, " + System.currentTimeMillis());
-        SearchManager.verifyCandidateQueue.shutdown();
-        logger.info("shutting down RCQ, " + System.currentTimeMillis());
-        SearchManager.reportCloneQueue.shutdown();
+//        SearchManager.queryBlockQueue.shutdown();
+//        logger.info("shutting down QCQ, " + System.currentTimeMillis());
+//        SearchManager.queryCandidatesQueue.shutdown();
+//        logger.info("shutting down VCQ, " + System.currentTimeMillis());
+//        SearchManager.verifyCandidateQueue.shutdown();
+//        logger.info("shutting down RCQ, " + System.currentTimeMillis());
+//        SearchManager.reportCloneQueue.shutdown();
+        SearchManager.queryLineQueue.shutdown();
+        this.pool = new ThreadedChannel<Object>(20);
     }
     
     
@@ -415,8 +426,8 @@ public class SearchManager {
         try {
             // SearchManager.bagsToSortQueue = new ThreadedChannel<Bag>(
             // this.threadsToProcessBagsToSortQueue, BagSorter.class);
-            SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
-                    InvertedIndexCreator.class);
+            SearchManager.bagsToInvertedIndexQueue = this.pool; //new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
+                    //InvertedIndexCreator.class);
             while ((line = br.readLine()) != null && line.trim().length() > 0) {
                 completedLines++;
                 if (completedLines <= avoidLines) {
@@ -456,6 +467,7 @@ public class SearchManager {
         } finally {
             // SearchManager.bagsToSortQueue.shutdown();
             SearchManager.bagsToInvertedIndexQueue.shutdown();
+            this.pool = new ThreadedChannel<Object>(20);
             try {
                 br.close();
             } catch (IOException e) {

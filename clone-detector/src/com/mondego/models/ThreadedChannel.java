@@ -17,6 +17,10 @@ public class ThreadedChannel<E> {
     private Semaphore semaphore;
     private static final Logger logger = LogManager.getLogger(ThreadedChannel.class);
 
+    public ThreadedChannel(int nThreads) {
+    		this.executor = Executors.newFixedThreadPool(5);
+    }
+    
     public ThreadedChannel(int nThreads, Class clazz) {
         this.executor = Executors.newFixedThreadPool(nThreads);
         this.workerType = clazz;
@@ -25,25 +29,46 @@ public class ThreadedChannel<E> {
 
     public void send(E e) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
             InvocationTargetException, NoSuchMethodException, SecurityException {
-        final Runnable o = this.workerType.getDeclaredConstructor(e.getClass()).newInstance(e);
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException ex) {
-            logger.error("Caught interrupted exception " + ex);
-        }
+//    	final Runnable o = (Runnable) e;
+    	final Runnable o;
+    	if (e.getClass() == QueryBlock.class) {
+    		o = CandidateSearcher.class.getDeclaredConstructor(e.getClass()).newInstance(e);
+    	} else if (e.getClass() == String.class) {
+    		o = QueryLineProcessor.class.getDeclaredConstructor(e.getClass()).newInstance(e);
+    	} else if (e.getClass() == QueryCandidates.class) {
+    		o = CandidateProcessor.class.getDeclaredConstructor(e.getClass()).newInstance(e);
+    	} else if (e.getClass() == CandidatePair.class) {
+    		o = CloneValidator.class.getDeclaredConstructor(e.getClass()).newInstance(e);
+    	} else if (e.getClass() == ClonePair.class) {
+    		o = CloneReporter.class.getDeclaredConstructor(e.getClass()).newInstance(e);
+    	} else if (e.getClass() == Bag.class) {
+    		o = InvertedIndexCreator.class.getDeclaredConstructor(e.getClass()).newInstance(e);
+    	} else {
+    		throw new NoSuchMethodException("Unknown object: " + e.getClass());
+    	}
+    	
+    	
+//        final Runnable o = this.workerType.getDeclaredConstructor(e.getClass()).newInstance(e);
+//        try {
+//            semaphore.acquire();
+//        } catch (InterruptedException ex) {
+//            logger.error("Caught interrupted exception " + ex);
+//        }
 
         try {
-            executor.execute(new Runnable() {
-                public void run() {
-                    try {
-                        o.run();
-                    } finally {
-                        semaphore.release();
-                    }
-                }
-            });
+        	executor.execute(o);
+//            executor.execute(new Runnable() {
+//                public void run() {
+//                	o.run();
+////                    try {
+////                        o.run();
+////                    } finally {
+////                        semaphore.release();
+////                    }
+//                }
+//            });
         } catch (RejectedExecutionException ex) {
-            semaphore.release();
+//            semaphore.release();
         }
     }
 
