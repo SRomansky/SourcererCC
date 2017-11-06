@@ -398,6 +398,7 @@ public class Daemon {
 			File dir = new File(outputDir);
 			File[] directoryListing = dir.listFiles();
 			int lineno = 0;
+			StringBuilder sb = new StringBuilder();
 			if (directoryListing != null) {
 				for (File file : directoryListing) {
 					if (file.isFile()) {
@@ -437,7 +438,8 @@ public class Daemon {
 //									  "</details>");
 									
 							String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
-							report = report.concat(row);
+							sb.append(row);
+//							report = report.concat(row);
 
 							line = bufferedReader.readLine();
 							lineno++;
@@ -451,10 +453,11 @@ public class Daemon {
 			} else {
 				logger.error("The results directory doesn't seem to exist.");
 			}
+			report = report.concat(sb.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		
 		return report;
 	}
 	
