@@ -151,7 +151,7 @@ public class DaemonTest {
 	 * Check that the report is generated properly by the client.
 	 */
 	@Test
-	public void testQuery() {
+	public void testQuery100m() {
 		// Assume that clone-detector/src/test/input contains valid .license, .header, .code, and dataset/*.token files.
 		// Copies the input folder contents to the query folder.
 		// Runs a query of 10 modules against the same 10 modules.
@@ -166,7 +166,7 @@ public class DaemonTest {
 		SearchManager instance = createDaemon();
 		// end general setup
 
-		// 10 on 10
+		// 100 on 100
 		// setup dataset directories
 		setSearchManagerProperties(testDataPath, "100m", "100m");
 		copy100Modules(testDataPath);
@@ -198,14 +198,124 @@ public class DaemonTest {
         		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath, SearchManager.DATASET_SRC_DIR // TODO rename
         		);
 		// Use this code to create a new expected_report.txt file in the clone-detector directory, if you have changed the format.
-		try {
-			Files.write( Paths.get("expected_report_100m.txt"), report.getBytes(), StandardOpenOption.CREATE);
-		} catch (IOException e1) {
+//		try {
+//			Files.write( Paths.get("expected_report_100m.txt"), report.getBytes(), StandardOpenOption.CREATE);
+//		} catch (IOException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//			fail("Failed to create expected_report.txt");
+//		}
+//		fail("Report generate.");
+		String reportPath = System.getProperty("user.dir") + "/src/test/expected_report_100m.txt";
+		String expectedReport = null;
+        try {
+			expectedReport = new String(Files.readAllBytes(Paths.get(reportPath))).trim();
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e1.printStackTrace();
-			fail("Failed to create expected_report.txt");
+			e.printStackTrace();
+			fail("Failed to read expected report.");
 		}
-		fail("Report generate.");
+        // The reports rows get shuffled between calls. So, string match won't work to compare them. comparing html nodes could work, unless there are embedded html code in the clones.
+        // This is a work-around.
+        String noid_report = report.replaceAll("show\\('\\d+'\\)", "")
+        	.replaceAll("id=\"\\d+\"", "");
+        String noid_ereport = expectedReport.replaceAll("show\\('\\d+'\\)", "")
+            	.replaceAll("id=\"\\d+\"", "");
+        String[] rp = noid_report.split(Pattern.quote("<tr class=\\\"none\\\">"));
+        String[] erp = noid_ereport.split(Pattern.quote("<tr class=\\\"none\\\">")); // assume that the clones don't contain this tag.
+        HashMap<String, Boolean> rpmap = new HashMap<String, Boolean>();
+        HashMap<String, Boolean> erpmap = new HashMap<String, Boolean>();
+        for (String row : rp) {
+        		rpmap.put(row, true);
+        }
+        for (String row : erp) {
+        		erpmap.put(row, true);
+        }
+	    System.out.println("Expected number of rows: " + erpmap.size() + ", found: " + rpmap.size());
+
+        // check the two maps have the same rows.
+        for (Object key : erpmap.keySet()) {
+        		Pattern p = Pattern.compile("<pre><code class=\"language-python\">null</code></pre>", Pattern.LITERAL);
+        		if (p.matcher((String) key).find()) // p.matcher((String) key).)
+        			continue;
+        	
+        		if (null == rpmap.get(key)) {
+        			System.out.println("begin: " + key + " :end");  // the missing row.
+        			try {
+        				System.out.println("See bad_report.txt");
+						Files.write( Paths.get("bad_report.txt"), report.getBytes(), StandardOpenOption.CREATE);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+        		}
+        		assertNotNull (rpmap.get(key)); // "Missing row in report"
+        }
+        
+        // TODO check the generated report for 1 or 2 specific clone pairs.
+        
+	}
+	
+	/**
+	 * Check that the client can run clone detection comparing the queryset to the dataset.
+	 * Check that the report is generated properly by the client.
+	 */
+	@Test
+	public void testQuery10m() {
+		// Assume that clone-detector/src/test/input contains valid .license, .header, .code, and dataset/*.token files.
+		// Copies the input folder contents to the query folder.
+		// Runs a query of 10 modules against the same 10 modules.
+		
+		// expected result: no crashes
+		// expected result: a generated report
+		
+		// general setup
+		String sourcererCCPath = System.getProperty("user.dir"); // <path>/SourcererCC/clone-detector
+		// update the path to the test dataset
+		String testDataPath = sourcererCCPath + "/src/test/benchmark_sets/";
+		SearchManager instance = createDaemon();
+		// end general setup
+
+		// 10 on 10
+		// setup dataset directories
+		setSearchManagerProperties(testDataPath, "10m", "10m");
+		copy10Modules(testDataPath);
+		
+//		SearchManager instance = createDaemon();
+		SearchManager.min_tokens = 1;
+		// The daemon uses global variables from SearchManager to locate the queryset.
+//		SearchManager.queryHeaderFilePath  // overwritten by a POST message
+//		SearchManager.queryLicenseFilePath  // overwritten by a POST message
+//		sm.QUERY_DIR_PATH // Warning, this directory is cleaned before usage. Do not set it to test/input
+//		SearchManager.QUERY_SRC_DIR  // XXX This isn't implemented yet.
+		
+//		try {
+//			FileUtils.copyDirectory(new File(SearchManager.DATASET_DIR), new File(SearchManager.QUERY_DIR_PATH)); // input/dataset/*token
+//			FileUtils.copyFile(new File(SearchManager.DATASET_SRC_DIR), new File(SearchManager.QUERY_SRC_DIR));  // test.code
+//			FileUtils.copyFile(new File(SearchManager.datasetHeaderFilePath), new File(SearchManager.queryHeaderFilePath)); // test.header
+//			FileUtils.copyFile(new File(SearchManager.datasetLicenseFilePath), new File(SearchManager.queryLicenseFilePath)); // test.license
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//			fail("Error copying test files.");
+//		}
+		
+		instance.daemon.start();
+		instance.daemon.query(); // This shouldn't throw any exceptions.
+		
+		String report = instance.daemon.generateReport(
+        		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, SearchManager.QUERY_SRC_DIR,
+        		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath, SearchManager.DATASET_SRC_DIR // TODO rename
+        		);
+		// Use this code to create a new expected_report.txt file in the clone-detector directory, if you have changed the format.
+//		try {
+//			Files.write( Paths.get("expected_report.txt"), report.getBytes(), StandardOpenOption.CREATE);
+//		} catch (IOException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//			fail("Failed to create expected_report.txt");
+//		}
+//		fail("Report generate.");
 		String reportPath = System.getProperty("user.dir") + "/src/test/expected_report.txt";
 		String expectedReport = null;
         try {
