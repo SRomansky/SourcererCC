@@ -5,10 +5,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.ParseException;
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -94,6 +96,14 @@ public class WordFrequencyStore implements ITokensFileProcessor {
                 this.wordFreq.put(tokenStr, (long) tf.getFrequency());
             }
         }
+        
+        
+//        bag.stream()
+//        		.map(tf -> {
+//        			return new AbstractMap.SimpleEntry<String,Long>(tf.getToken().getValue(), (long) tf.getFrequency());
+//        		}).collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+        
+        
         // if map size if more than 8 Million flush it.
         if (this.wordFreq.size() > 8000000) {
             // write it in a file. it is a treeMap, so it is already sorted by
@@ -165,16 +175,31 @@ public class WordFrequencyStore implements ITokensFileProcessor {
         long start = System.currentTimeMillis();
         this.wfmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");
         int count = 0;
-        for (Entry<String, Long> entry : this.wordFreq.entrySet()) {
-
-            long oldfreq = wfmSearcher.getFrequency(entry.getKey());
-            if (oldfreq < 0){
-                oldfreq = 0;
-            }
-            wfmIndexer.indexWFMEntry(entry.getKey(), oldfreq + entry.getValue());
-            if (++count % 1000000 == 0)
-                logger.info("...flushed " + count);
-        }
+//        for (Entry<String, Long> entry : this.wordFreq.entrySet()) {
+//
+//            long oldfreq = wfmSearcher.getFrequency(entry.getKey());
+//            if (oldfreq < 0){
+//                oldfreq = 0;
+//            }
+//            wfmIndexer.indexWFMEntry(entry.getKey(), oldfreq + entry.getValue());
+//            if (++count % 1000000 == 0)
+//                logger.info("...flushed " + count);
+//        }
+        Map<String,Long> newEntries = this.wordFreq.entrySet().stream()
+        		.map(e -> {
+        			long oldfreq = wfmSearcher.getFrequency(e.getKey());
+        			if (oldfreq < 0)
+        				oldfreq = 0;
+        			return new AbstractMap.SimpleEntry<>(e.getKey(), oldfreq + e.getValue());
+        		})
+        		.collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+        wfmIndexer.indexWFMEntries(newEntries);
+        
+//      bag.stream()
+//		.map(tf -> {
+//			return new AbstractMap.SimpleEntry<String,Long>(tf.getToken().getValue(), (long) tf.getFrequency());
+//		}).collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+        
         this.wfmSearcher.close();
         try {
             this.wfmIndexWriter.forceMerge(1);
@@ -185,6 +210,7 @@ public class WordFrequencyStore implements ITokensFileProcessor {
         }
         long elapsed = System.currentTimeMillis() - start;
         logger.info("*** FLUSHING END *** " + count + " in " + elapsed / 1000 + "s");
+        System.out.println("*** FLUSHING END *** " + count + " in " + elapsed / 1000 + "s");
     }
 
     private void shutdown() {

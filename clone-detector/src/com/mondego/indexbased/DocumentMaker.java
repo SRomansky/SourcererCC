@@ -4,6 +4,9 @@
 package com.mondego.indexbased;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -145,5 +148,49 @@ public class DocumentMaker {
     public void setIndexWriter(IndexWriter indexWriter) {
         this.indexWriter = indexWriter;
     }
+
+	public void indexWFMEntries(Map<String, Long> newEntries) {
+		// TODO Auto-generated method stub
+		
+//		this.indexWriter.updateDocuments(new Term("key"), newEntries, null);
+		List<Document> docs = newEntries.keySet().stream().map(k -> {
+			Document d = new Document();
+			StringField s = new StringField("key", k, Field.Store.NO);
+			StoredField f = new StoredField("frequency", newEntries.get(k));
+			d.add(s);
+			d.add(f);
+			return d;
+		})
+		.collect(Collectors.toList());
+		
+		try {
+			this.indexWriter.updateDocuments(null, docs);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} // ?
+//		
+//		// Create the document and fields only once, for no GC
+//		if (wfmEntry == null) {
+//		    wfmEntry = new Document();
+//		    wordField = new StringField("key", word,
+//						       Field.Store.NO);
+//		    wfmEntry.add(wordField);
+//		    freqField = new StoredField("frequency", frequency);
+//		    wfmEntry.add(freqField);
+//		}
+//		else {
+//		    wordField.setStringValue(word);
+//		    freqField.setLongValue(frequency);
+//		}
+//
+//	        try {
+//		    this.indexWriter.updateDocument(new Term("key", word), wfmEntry);
+//	        } catch (IOException e) {
+//	            logger.error("EXCEPTION caught while indexing document for wfm entry "
+//	                            + word + ":" + frequency);
+//	            e.printStackTrace();
+//	        }
+	}
 
 }

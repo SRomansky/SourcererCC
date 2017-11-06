@@ -150,7 +150,7 @@ public class DaemonTest {
 	 * Check that the client can run clone detection comparing the queryset to the dataset.
 	 * Check that the report is generated properly by the client.
 	 */
-	//@Test
+//	@Test
 	public void testQuery() {
 		// Assume that clone-detector/src/test/input contains valid .license, .header, .code, and dataset/*.token files.
 		// Copies the input folder contents to the query folder.
@@ -327,6 +327,34 @@ public class DaemonTest {
 		setEndTime();
 		long timeDelta = (endtime - startTime) / 1000;
 		System.err.println(msg + ", time (micro seconds): " + timeDelta);
+	}
+	
+//	@Test
+	public void testIndex() {
+		String sourcererCCPath = System.getProperty("user.dir"); // <path>/SourcererCC/clone-detector
+		// update the path to the test dataset
+		String testDataPath = sourcererCCPath + "/src/test/benchmark_sets/";
+		SearchManager instance = createDaemon();
+		// end general setup
+		
+		// 1000
+		// setup dataset directories
+		setSearchManagerProperties(testDataPath, "1000m", "1000m");
+		
+		setStartTime();
+		Daemon.RESET_GTPM = true;  // first time using 10m dataset, index it even if a gtpmindex file exists.
+		instance.daemon.start(); // load 10m dataset and index it
+		Daemon.RESET_GTPM = false;
+        logTime("Total 1000m index run time");
+        
+        // setup 100m dataset directories
+        setSearchManagerProperties(testDataPath, "100m", "100m");
+
+        setStartTime();
+        Daemon.RESET_GTPM = true;  // first time using 100m dataset, index it even if a gtpmindex file exists.
+        instance.daemon.start(); // load 100m dataset and index it
+        Daemon.RESET_GTPM = false;
+        logTime("Total 100m index run time");
 	}
 	
     @Test
