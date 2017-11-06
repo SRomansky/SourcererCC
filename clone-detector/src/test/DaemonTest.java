@@ -168,8 +168,8 @@ public class DaemonTest {
 
 		// 10 on 10
 		// setup dataset directories
-		setSearchManagerProperties(testDataPath, "100m", "100m");
-		
+		setSearchManagerProperties(testDataPath, "10m", "10m");
+		copy10Modules(testDataPath);
 		
 //		SearchManager instance = createDaemon();
 		SearchManager.min_tokens = 1;
@@ -206,7 +206,7 @@ public class DaemonTest {
 //			fail("Failed to create expected_report.txt");
 //		}
 //		fail("Report generate.");
-		String reportPath = System.getProperty("user.dir") + "/src/test/expected_report_100m.txt";
+		String reportPath = System.getProperty("user.dir") + "/src/test/expected_report.txt";
 		String expectedReport = null;
         try {
 			expectedReport = new String(Files.readAllBytes(Paths.get(reportPath))).trim();
@@ -241,6 +241,13 @@ public class DaemonTest {
         	
         		if (null == rpmap.get(key)) {
         			System.out.println("begin: " + key + " :end");  // the missing row.
+        			try {
+        				System.out.println("See bad_report.txt");
+						Files.write( Paths.get("bad_report.txt"), report.getBytes(), StandardOpenOption.CREATE);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
         		}
         		assertNotNull (rpmap.get(key)); // "Missing row in report"
         }
