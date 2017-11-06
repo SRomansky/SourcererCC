@@ -98,5 +98,5 @@ task copyToLib(type: Copy) {
 }
 
 tasks.withType(Test) {
-	jvmArgs = ['-Xms60g', '-Xmx60g']
+	jvmArgs = ['-Xms10g', '-Xmx10g']
 }

@@ -168,8 +168,8 @@ public class DaemonTest {
 
 		// 10 on 10
 		// setup dataset directories
-		setSearchManagerProperties(testDataPath, "10m", "10m");
-		copy10Modules(testDataPath);
+		setSearchManagerProperties(testDataPath, "100m", "100m");
+		copy100Modules(testDataPath);
 		
 //		SearchManager instance = createDaemon();
 		SearchManager.min_tokens = 1;
@@ -198,14 +198,14 @@ public class DaemonTest {
         		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath, SearchManager.DATASET_SRC_DIR // TODO rename
         		);
 		// Use this code to create a new expected_report.txt file in the clone-detector directory, if you have changed the format.
-//		try {
-//			Files.write( Paths.get("expected_report_100m.txt"), report.getBytes(), StandardOpenOption.CREATE);
-//		} catch (IOException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//			fail("Failed to create expected_report.txt");
-//		}
-//		fail("Report generate.");
+		try {
+			Files.write( Paths.get("expected_report_100m.txt"), report.getBytes(), StandardOpenOption.CREATE);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			fail("Failed to create expected_report.txt");
+		}
+		fail("Report generate.");
 		String reportPath = System.getProperty("user.dir") + "/src/test/expected_report.txt";
 		String expectedReport = null;
         try {
