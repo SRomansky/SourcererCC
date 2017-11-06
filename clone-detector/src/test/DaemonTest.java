@@ -150,7 +150,7 @@ public class DaemonTest {
 	 * Check that the client can run clone detection comparing the queryset to the dataset.
 	 * Check that the report is generated properly by the client.
 	 */
-//	@Test
+	@Test
 	public void testQuery() {
 		// Assume that clone-detector/src/test/input contains valid .license, .header, .code, and dataset/*.token files.
 		// Copies the input folder contents to the query folder.
@@ -159,7 +159,19 @@ public class DaemonTest {
 		// expected result: no crashes
 		// expected result: a generated report
 		
+		// general setup
+		String sourcererCCPath = System.getProperty("user.dir"); // <path>/SourcererCC/clone-detector
+		// update the path to the test dataset
+		String testDataPath = sourcererCCPath + "/src/test/benchmark_sets/";
 		SearchManager instance = createDaemon();
+		// end general setup
+
+		// 10 on 10
+		// setup dataset directories
+		setSearchManagerProperties(testDataPath, "100m", "100m");
+		
+		
+//		SearchManager instance = createDaemon();
 		SearchManager.min_tokens = 1;
 		// The daemon uses global variables from SearchManager to locate the queryset.
 //		SearchManager.queryHeaderFilePath  // overwritten by a POST message
@@ -167,16 +179,16 @@ public class DaemonTest {
 //		sm.QUERY_DIR_PATH // Warning, this directory is cleaned before usage. Do not set it to test/input
 //		SearchManager.QUERY_SRC_DIR  // XXX This isn't implemented yet.
 		
-		try {
-			FileUtils.copyDirectory(new File(SearchManager.DATASET_DIR), new File(SearchManager.QUERY_DIR_PATH)); // input/dataset/*token
-			FileUtils.copyFile(new File(SearchManager.DATASET_SRC_DIR), new File(SearchManager.QUERY_SRC_DIR));  // test.code
-			FileUtils.copyFile(new File(SearchManager.datasetHeaderFilePath), new File(SearchManager.queryHeaderFilePath)); // test.header
-			FileUtils.copyFile(new File(SearchManager.datasetLicenseFilePath), new File(SearchManager.queryLicenseFilePath)); // test.license
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			fail("Error copying test files.");
-		}
+//		try {
+//			FileUtils.copyDirectory(new File(SearchManager.DATASET_DIR), new File(SearchManager.QUERY_DIR_PATH)); // input/dataset/*token
+//			FileUtils.copyFile(new File(SearchManager.DATASET_SRC_DIR), new File(SearchManager.QUERY_SRC_DIR));  // test.code
+//			FileUtils.copyFile(new File(SearchManager.datasetHeaderFilePath), new File(SearchManager.queryHeaderFilePath)); // test.header
+//			FileUtils.copyFile(new File(SearchManager.datasetLicenseFilePath), new File(SearchManager.queryLicenseFilePath)); // test.license
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//			fail("Error copying test files.");
+//		}
 		
 		instance.daemon.start();
 		instance.daemon.query(); // This shouldn't throw any exceptions.
@@ -187,13 +199,14 @@ public class DaemonTest {
         		);
 		// Use this code to create a new expected_report.txt file in the clone-detector directory, if you have changed the format.
 //		try {
-//			Files.write( Paths.get("expected_report.txt"), report.getBytes(), StandardOpenOption.CREATE);
+//			Files.write( Paths.get("expected_report_100m.txt"), report.getBytes(), StandardOpenOption.CREATE);
 //		} catch (IOException e1) {
 //			// TODO Auto-generated catch block
 //			e1.printStackTrace();
 //			fail("Failed to create expected_report.txt");
 //		}
-		String reportPath = System.getProperty("user.dir") + "/src/test/expected_report.txt";
+//		fail("Report generate.");
+		String reportPath = System.getProperty("user.dir") + "/src/test/expected_report_100m.txt";
 		String expectedReport = null;
         try {
 			expectedReport = new String(Files.readAllBytes(Paths.get(reportPath))).trim();
@@ -240,9 +253,9 @@ public class DaemonTest {
 		String testDir = basePath + "/" + dir;
 		
 		SearchManager.DATASET_DIR = testDir + "/dataset";
-        SearchManager.DATASET_SRC_DIR = testDir + "/test.code"; // this is actually a single file, this is the code file //TODO rename this variable.
-        SearchManager.datasetLicenseFilePath = testDir + "/test.license";
-        SearchManager.datasetHeaderFilePath = testDir + "/test.header";  // Where is the code file?
+        SearchManager.DATASET_SRC_DIR = testDir + "/" + filePrefix + ".code"; // this is actually a single file, this is the code file //TODO rename this variable.
+        SearchManager.datasetLicenseFilePath = testDir + "/" + filePrefix + ".license";
+        SearchManager.datasetHeaderFilePath = testDir + "/" + filePrefix + ".header";  // Where is the code file?
         
 		return;
 	}
@@ -357,7 +370,7 @@ public class DaemonTest {
         logTime("Total 100m index run time");
 	}
 	
-    @Test
+//    @Test
 	public void testBenchmark() {
 		// This test requires the benchmark_sets.zip file. It is not included in the github repository.
 		// The zip file should be extracted in src/test/ to make src/test/benchmark_sets
