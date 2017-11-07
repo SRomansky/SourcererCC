@@ -430,89 +430,94 @@ public class SearchManager {
 //        SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue, InvertedIndexCreator.class;
         ArrayList<String> lines = new ArrayList<String>();
         
-//        try {
-//			while ((line = br.readLine()) != null && line.trim().length() > 0) {
-//				completedLines++;
-//				if (completedLines <= avoidLines)
-//					continue;
-//				lines.add(line);
-//			}
-//		} catch (IOException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-        
-//        try {
-//        	br.close();
-//        } catch (IOException e) {
-//        	e.printStackTrace();
-//        }
-        
-//        lines.stream()
-//        		.map(l -> theInstance.cloneHelper.deserialise(l))
-//        		.filter(bag -> bag != null)
-//        		.forEach(bag -> {
-//        		try {
-//					SearchManager.bagsToInvertedIndexQueue.send(bag);
-//				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-//						| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//        });
-        
+        SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
+                InvertedIndexCreator.class);
         
         try {
-            // SearchManager.bagsToSortQueue = new ThreadedChannel<Bag>(
-            // this.threadsToProcessBagsToSortQueue, BagSorter.class);
-            SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
-                    InvertedIndexCreator.class); //this.pool;
-            while ((line = br.readLine()) != null && line.trim().length() > 0) {
-                completedLines++;
-                if (completedLines <= avoidLines) {
-                    continue;
-                }
-                Bag bag = theInstance.cloneHelper.deserialise(line);
-                if (null != bag) {
-                    size = size + (bag.getNumUniqueTokens() * 300); // approximate mem utilization. 1 key value pair = 300 bytes
-                    logger.debug("indexing "+ completedLines + " bag: "+ bag + ", mem: "+size + " bytes");
-                    SearchManager.bagsToInvertedIndexQueue.send(bag);
-                    if (size >= maxMemory) {
-                        return completedLines;
-                    }
-                }
-            }
+			while ((line = br.readLine()) != null && line.trim().length() > 0) {
+				completedLines++;
+				if (completedLines <= avoidLines)
+					continue;
+				lines.add(line);
+			}
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+        
+        try {
+        	br.close();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IllegalArgumentException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (SecurityException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } finally {
-            // SearchManager.bagsToSortQueue.shutdown();
-            SearchManager.bagsToInvertedIndexQueue.shutdown();
-//            this.pool = new ThreadedChannel<Object>(20);
-            try {
-                br.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        	e.printStackTrace();
         }
+        
+        lines.stream()
+        		.map(l -> theInstance.cloneHelper.deserialise(l))
+        		.filter(bag -> bag != null)
+        		.forEach(bag -> {
+        		try {
+					SearchManager.bagsToInvertedIndexQueue.send(bag);
+				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+						| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+        });
+        
+        SearchManager.bagsToInvertedIndexQueue.shutdown();
+        // this change seems to improve performance.
+        
+//        try {
+//            // SearchManager.bagsToSortQueue = new ThreadedChannel<Bag>(
+//            // this.threadsToProcessBagsToSortQueue, BagSorter.class);
+//            SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
+//                    InvertedIndexCreator.class); //this.pool;
+//            while ((line = br.readLine()) != null && line.trim().length() > 0) {
+//                completedLines++;
+//                if (completedLines <= avoidLines) {
+//                    continue;
+//                }
+//                Bag bag = theInstance.cloneHelper.deserialise(line);
+//                if (null != bag) {
+//                    size = size + (bag.getNumUniqueTokens() * 300); // approximate mem utilization. 1 key value pair = 300 bytes
+//                    logger.debug("indexing "+ completedLines + " bag: "+ bag + ", mem: "+size + " bytes");
+//                    SearchManager.bagsToInvertedIndexQueue.send(bag);
+//                    if (size >= maxMemory) {
+//                        return completedLines;
+//                    }
+//                }
+//            }
+//        } catch (IOException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (InstantiationException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (IllegalAccessException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (IllegalArgumentException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (InvocationTargetException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (NoSuchMethodException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (SecurityException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } finally {
+//            // SearchManager.bagsToSortQueue.shutdown();
+//            SearchManager.bagsToInvertedIndexQueue.shutdown();
+////            this.pool = new ThreadedChannel<Object>(20);
+//            try {
+//                br.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
         return -1;
     }
 

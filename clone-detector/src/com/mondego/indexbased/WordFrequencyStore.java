@@ -175,25 +175,26 @@ public class WordFrequencyStore implements ITokensFileProcessor {
         long start = System.currentTimeMillis();
         this.wfmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");
         int count = 0;
-        for (Entry<String, Long> entry : this.wordFreq.entrySet()) {
-
-            long oldfreq = wfmSearcher.getFrequency(entry.getKey());
-            if (oldfreq < 0){
-                oldfreq = 0;
-            }
-            wfmIndexer.indexWFMEntry(entry.getKey(), oldfreq + entry.getValue());
-            if (++count % 1000000 == 0)
-                logger.info("...flushed " + count);
-        }
-//        Map<String,Long> newEntries = this.wordFreq.entrySet().stream()
-//        		.map(e -> {
-//        			long oldfreq = wfmSearcher.getFrequency(e.getKey());
-//        			if (oldfreq < 0)
-//        				oldfreq = 0;
-//        			return new AbstractMap.SimpleEntry<>(e.getKey(), oldfreq + e.getValue());
-//        		})
-//        		.collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
-//        wfmIndexer.indexWFMEntries(newEntries);
+//        for (Entry<String, Long> entry : this.wordFreq.entrySet()) {
+//
+//            long oldfreq = wfmSearcher.getFrequency(entry.getKey());
+//            if (oldfreq < 0){
+//                oldfreq = 0;
+//            }
+//            wfmIndexer.indexWFMEntry(entry.getKey(), oldfreq + entry.getValue());
+//            if (++count % 1000000 == 0)
+//                logger.info("...flushed " + count);
+//        }
+        // this change doesn't seem to influence indexing performance.
+        Map<String,Long> newEntries = this.wordFreq.entrySet().stream()
+        		.map(e -> {
+        			long oldfreq = wfmSearcher.getFrequency(e.getKey());
+        			if (oldfreq < 0)
+        				oldfreq = 0;
+        			return new AbstractMap.SimpleEntry<>(e.getKey(), oldfreq + e.getValue());
+        		})
+        		.collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+        wfmIndexer.indexWFMEntries(newEntries);
         
 //      bag.stream()
 //		.map(tf -> {
