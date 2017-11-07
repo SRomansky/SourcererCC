@@ -24,7 +24,7 @@ public class CandidateProcessor implements IListener, Runnable {
         try {
             // System.out.println( "QCQ size: "+
             // SearchManager.queryCandidatesQueue.size() + Util.debug_thread());
-            this.processResultWithFilter();
+            this.processResultWithFilter(this.qc);
         } catch (NoSuchElementException e) {
             logger.error("EXCEPTION CAUGHT::", e);
             e.printStackTrace();
@@ -62,24 +62,55 @@ public class CandidateProcessor implements IListener, Runnable {
         }
     }
 
-    private void processResultWithFilter() throws InterruptedException, InstantiationException, IllegalAccessException,
+    static void processResultWithFilter(QueryCandidates qc) throws InterruptedException, InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         // System.out.println("HERE, thread_id: " + Util.debug_thread() +
         // ", query_id "+ queryBlock.getId());
-        Map<Long, CandidateSimInfo> simMap = this.qc.simMap;
-        QueryBlock queryBlock = this.qc.queryBlock;
+        Map<Long, CandidateSimInfo> simMap = qc.simMap;
+        QueryBlock queryBlock = qc.queryBlock;
         long sstart_time = System.currentTimeMillis();
         logger.debug(
                 SearchManager.NODE_PREFIX + ", num candidates: " + simMap.entrySet().size() + ", query: " + queryBlock);
-        for (Entry<Long, CandidateSimInfo> entry : simMap.entrySet()) {
-            long startTime = System.nanoTime();
-            CandidateSimInfo simInfo = entry.getValue();
+//        for (Entry<Long, CandidateSimInfo> entry : simMap.entrySet()) {
+//            long startTime = System.nanoTime();
+//            CandidateSimInfo simInfo = entry.getValue();
+//            long candidateId = simInfo.doc.fId;
+//            long functionIdCandidate = simInfo.doc.pId;
+//            int newCt = -1;
+//            int candidateSize = simInfo.doc.size;
+//            if (candidateSize < queryBlock.getComputedThreshold() || candidateSize > queryBlock.getMaxCandidateSize()) {
+//                continue; // ignore this candidate
+//            }
+//            if (candidateSize > queryBlock.getSize()) {
+//                newCt = simInfo.doc.ct;
+//            }
+//            CandidatePair candidatePair = null;
+//            if (newCt != -1) {
+//                candidatePair = new CandidatePair(queryBlock, simInfo, newCt, candidateSize,
+//                        functionIdCandidate, candidateId);
+//            } else {
+//                candidatePair = new CandidatePair(queryBlock, simInfo,
+//                        queryBlock.getComputedThreshold(), candidateSize, functionIdCandidate, candidateId);
+//            }
+//            long estimatedTime = System.nanoTime() - startTime;
+//            // System.out.println(SearchManager.NODE_PREFIX + "
+//            // CandidateProcessor, " + candidatePair + " in " +
+//            // estimatedTime/1000 + " micros");
+//            SearchManager.verifyCandidateQueue.send(candidatePair);
+//            
+////            CloneValidator.validate(candidatePair);
+//            entry = null;
+//        }
+        
+        // This makes a lot of function calls
+        simMap.entrySet().parallelStream().forEach(e -> {
+            CandidateSimInfo simInfo = e.getValue();
             long candidateId = simInfo.doc.fId;
             long functionIdCandidate = simInfo.doc.pId;
             int newCt = -1;
             int candidateSize = simInfo.doc.size;
             if (candidateSize < queryBlock.getComputedThreshold() || candidateSize > queryBlock.getMaxCandidateSize()) {
-                continue; // ignore this candidate
+                return; // ignore this candidate
             }
             if (candidateSize > queryBlock.getSize()) {
                 newCt = simInfo.doc.ct;
@@ -92,13 +123,15 @@ public class CandidateProcessor implements IListener, Runnable {
                 candidatePair = new CandidatePair(queryBlock, simInfo,
                         queryBlock.getComputedThreshold(), candidateSize, functionIdCandidate, candidateId);
             }
-            long estimatedTime = System.nanoTime() - startTime;
-            // System.out.println(SearchManager.NODE_PREFIX + "
-            // CandidateProcessor, " + candidatePair + " in " +
-            // estimatedTime/1000 + " micros");
-            SearchManager.verifyCandidateQueue.send(candidatePair);
-            entry = null;
-        }
+            
+            try {
+				CloneValidator.validate(candidatePair);
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException | SecurityException | InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+        });
     }
 
 }

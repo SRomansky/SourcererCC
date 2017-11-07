@@ -27,7 +27,7 @@ public class CandidateSearcher implements IListener, Runnable {
     @Override
     public void run() {
         try {
-            this.searchCandidates(queryBlock);
+            searchCandidates(queryBlock);
 
         } catch (NoSuchElementException e) {
             logger.error("EXCEPTION CAUGHT::", e);
@@ -67,22 +67,23 @@ public class CandidateSearcher implements IListener, Runnable {
         }
     }
 
-    private void searchCandidates(QueryBlock queryBlock)
+    static void searchCandidates(QueryBlock queryBlock)
             throws IOException, InterruptedException, InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         long startTime = System.nanoTime();
         QueryCandidates qc = new QueryCandidates();
-        qc.simMap = this.search(queryBlock);
+        qc.simMap = search(queryBlock);
         if (qc.simMap.size() > 0) {
             qc.queryBlock = queryBlock;
             long estimatedTime = System.nanoTime() - startTime;
             logger.debug(SearchManager.NODE_PREFIX + " CandidateSearcher, QueryBlock " + queryBlock + " in "
                     + estimatedTime / 1000 + " micros");
-            SearchManager.queryCandidatesQueue.send(qc);
+//            SearchManager.queryCandidatesQueue.send(qc);
+            CandidateProcessor.processResultWithFilter(qc);
         }
     }
 
-    private Map<Long, CandidateSimInfo> search(QueryBlock queryBlock) {
+    static private Map<Long, CandidateSimInfo> search(QueryBlock queryBlock) {
         Map<Long, CandidateSimInfo> simMap = new HashMap<Long, CandidateSimInfo>();
         Set<Long> earlierDocs = new HashSet<Long>();
         int termsSeenInQuery = 0;

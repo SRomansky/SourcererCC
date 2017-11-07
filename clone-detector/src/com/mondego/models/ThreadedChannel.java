@@ -1,6 +1,8 @@
 package com.mondego.models;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -15,6 +17,7 @@ public class ThreadedChannel<E> {
     private ExecutorService executor;
     private Class<Runnable> workerType;
     private Semaphore semaphore;
+	static private ConcurrentHashMap<String, Integer> blockedRecorder = new ConcurrentHashMap();
     private static final Logger logger = LogManager.getLogger(ThreadedChannel.class);
 
     public ThreadedChannel(int nThreads) {
@@ -37,36 +40,26 @@ public class ThreadedChannel<E> {
     
     public void send(E e) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
             InvocationTargetException, NoSuchMethodException, SecurityException {
-//    	final Runnable o;
-//    	if (e.getClass() == QueryBlock.class) {
-//    		o = CandidateSearcher.class.getDeclaredConstructor(e.getClass()).newInstance(e);
-//    	} else if (e.getClass() == String.class) {
-//    		o = QueryLineProcessor.class.getDeclaredConstructor(e.getClass()).newInstance(e);
-//    	} else if (e.getClass() == QueryCandidates.class) {
-//    		o = CandidateProcessor.class.getDeclaredConstructor(e.getClass()).newInstance(e);
-//    	} else if (e.getClass() == CandidatePair.class) {
-//    		o = CloneValidator.class.getDeclaredConstructor(e.getClass()).newInstance(e);
-//    	} else if (e.getClass() == ClonePair.class) {
-//    		o = CloneReporter.class.getDeclaredConstructor(e.getClass()).newInstance(e);
-//    	} else if (e.getClass() == Bag.class) {
-//    		o = InvertedIndexCreator.class.getDeclaredConstructor(e.getClass()).newInstance(e);
-//    	} else {
-//    		throw new NoSuchMethodException("Unknown object: " + e.getClass());
-//    	}
     	
     	
         final Runnable o = this.workerType.getDeclaredConstructor(e.getClass()).newInstance(e);
         try {
+        	if (blockedRecorder.containsKey(this.workerType.getCanonicalName())) {
+        		blockedRecorder.put(this.workerType.getCanonicalName(), blockedRecorder.get(this.workerType.getCanonicalName()) + 1);
+        	} else {
+        		blockedRecorder.put(this.workerType.getCanonicalName(), 1);
+        	}
+        	
+        	if (blockedRecorder.values().stream().mapToInt(Integer::intValue).sum() % 1000000 == 0)
+        		System.out.println(blockedRecorder.toString());
             semaphore.acquire();
         } catch (InterruptedException ex) {
             logger.error("Caught interrupted exception " + ex);
         }
 
         try {
-//        	executor.execute(o);
             executor.execute(new Runnable() {
                 public void run() {
-//                	o.run();
                     try {
                         o.run();
                     } finally {
