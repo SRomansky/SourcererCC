@@ -128,11 +128,14 @@ public class WordFrequencyStore implements ITokensFileProcessor {
 
             this.prepareIndex();
 
+            long start = System.currentTimeMillis();
             for (File inputFile : queryDir.listFiles()) {
             	if (inputFile.isFile())
             		this.readTokensFile(inputFile);
 
             }
+            long elapsed = System.currentTimeMillis() - start;
+            System.out.println("*** READ END ***  in " + elapsed / 1000 + "s");
 
             // write the last map to the index
             wfm_file_count += 1;
@@ -150,6 +153,7 @@ public class WordFrequencyStore implements ITokensFileProcessor {
     }
 
     public void prepareIndex() throws IOException {
+    		long start = System.currentTimeMillis();
         File globalWFMDIr = new File(Util.GTPM_INDEX_DIR);
         if (!globalWFMDIr.exists()) {
             Util.createDirs(Util.GTPM_INDEX_DIR);
@@ -168,6 +172,8 @@ public class WordFrequencyStore implements ITokensFileProcessor {
             logger.error("error caught while gtpm indexing");
             e.printStackTrace();
         }
+        long elapsed = System.currentTimeMillis() - start;
+        System.out.println("*** Prepare END ***  in " + elapsed / 1000 + "s");
     }
 
     private void flushToIndex() {
