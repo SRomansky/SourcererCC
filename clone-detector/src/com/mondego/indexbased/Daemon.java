@@ -169,18 +169,18 @@ public class Daemon {
     	setState(State.INIT);
     	dataset_id = calculateDatasetId();
     	
-    	if (!(new File(Util.GTPM_INDEX_DIR).exists()) || Daemon.RESET_GTPM) {
-    		// create gtpm index
-    		WordFrequencyStore wfs = new WordFrequencyStore();
-    		try {
-    			wfs.populateLocalWordFreqMap();
-    		} catch (IOException | ParseException e1) {
-    			// TODO Auto-generated catch block
-    			e1.printStackTrace();
-    		}
-    	}
-    	
-    	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
+//    	//if (!(new File(Util.GTPM_INDEX_DIR).exists()) || Daemon.RESET_GTPM) {
+//    		// create gtpm index
+//    		WordFrequencyStore wfs = new WordFrequencyStore();
+//    		try {
+//    			wfs.populateLocalWordFreqMap();
+//    		} catch (IOException | ParseException e1) {
+//    			// TODO Auto-generated catch block
+//    			e1.printStackTrace();
+//    		}
+//    	//}
+//    	
+//    	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
         File datasetDir = new File(SearchManager.DATASET_DIR);
         if (datasetDir.isDirectory()) {
             logger.info("Dataset directory: " + datasetDir.getAbsolutePath());
@@ -220,6 +220,24 @@ public class Daemon {
     	// TODO prevent multiple queries at the same time?
     	// start queue processors
     	setState(State.BUSY);
+    	
+    	/*
+    	// does anyone use the gtpm index dir?  // noindex.CloneHelper.getSortedQueryBlock // but it is commented out.
+    	// build gtpm index based on query contents
+    	//if (!(new File(Util.GTPM_INDEX_DIR).exists()) || Daemon.RESET_GTPM) {
+		// create gtpm index
+		WordFrequencyStore wfs = new WordFrequencyStore();
+		try {
+			wfs.populateLocalWordFreqMap();
+		} catch (IOException | ParseException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	//}*/
+	
+	//SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
+    	
+    	
     	sm.completedQueries = new HashSet<Long>();
 
         sm.startQueryThreads();

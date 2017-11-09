@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -432,7 +433,7 @@ public class SearchManager {
         
         SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
                 InvertedIndexCreator.class);
-        
+        System.out.println("*** Indexing dataset file: " + candidateFile.toString());
         try {
 			while ((line = br.readLine()) != null && line.trim().length() > 0) {
 				completedLines++;
@@ -451,10 +452,14 @@ public class SearchManager {
         	e.printStackTrace();
         }
         
-        lines.stream()
+        System.out.println("*** Read: " + lines.size() + " lines.");
+        List<Bag> bagsForIndex = lines.stream()
         		.map(l -> theInstance.cloneHelper.deserialise(l))
         		.filter(bag -> bag != null)
-        		.forEach(bag -> {
+        		.collect(Collectors.toList());
+        
+        System.out.println("*** Lines succesfully bagged: " + bagsForIndex.size());
+        	bagsForIndex.stream().forEach(bag -> {
         		try {
 					SearchManager.bagsToInvertedIndexQueue.send(bag);
 				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException

@@ -45,6 +45,7 @@ public class WordFrequencyStore implements ITokensFileProcessor {
     private CodeSearcher wfmSearcher = null;
     private IndexWriter wfmIndexWriter = null;
     private DocumentMaker wfmIndexer = null;
+	private int badBag = 0;
     private static final Logger logger = LogManager.getLogger(WordFrequencyStore.class);
     public WordFrequencyStore() {
         this.wordFreq = new TreeMap<String, Long>();
@@ -76,6 +77,7 @@ public class WordFrequencyStore implements ITokensFileProcessor {
         if (null != bag && bag.getSize() > SearchManager.min_tokens && bag.getSize() < SearchManager.max_tokens) {
             populateWordFreqMap(bag);
         } else {
+        	this.badBag ++;
             if (null == bag) {
                 logger.debug("empty block, ignoring");
             } else {
@@ -121,7 +123,7 @@ public class WordFrequencyStore implements ITokensFileProcessor {
     }
 
     public void populateLocalWordFreqMap() throws IOException, ParseException {
-
+    		System.out.println("*** Generating Query Map ***");
         File queryDir = new File(SearchManager.QUERY_DIR_PATH);
         if (queryDir.isDirectory()) {
             logger.debug("Directory: " + queryDir.getAbsolutePath());
@@ -136,6 +138,8 @@ public class WordFrequencyStore implements ITokensFileProcessor {
             }
             long elapsed = System.currentTimeMillis() - start;
             System.out.println("*** READ END ***  in " + elapsed / 1000 + "s");
+            System.out.println("*** READ: " + this.lineNumber + " lines.");
+            System.out.println("*** failed to parse: " + this.badBag + " bags");
 
             // write the last map to the index
             wfm_file_count += 1;
