@@ -1,8 +1,10 @@
 package com.mondego.models;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -82,6 +84,35 @@ public class CloneValidator implements IListener, Runnable {
              */
             int similarity = updateSimilarity(candidatePair.queryBlock,
                     candidatePair.computedThreshold, candidatePair.candidateSize, candidatePair.simInfo);
+            
+        	
+//        Set<String> candidateTokens = candidatePair.simInfo.doc.termInfoMap.entrySet().stream().map(e -> {
+//        		return e.getKey();
+//        		}).collect(Collectors.toSet());
+//        	Set<String> queryTokens = new HashSet<String>(candidatePair.queryBlock.getPrefixMap().keySet());
+//        	queryTokens.addAll(candidatePair.queryBlock.getSuffixMap().keySet());
+//        	candidateTokens.retainAll(queryTokens);
+//        	
+//            int similarity = 0;
+////            for (TokenFrequency tf : candidatePair.simInfo.doc.tokenFrequencies) {
+//            for (String token : candidateTokens) {
+//            		int candidateFrequency = candidatePair.simInfo.doc.termInfoMap.get(token).frequency;
+//            		int queryFrequency = 0;
+//            	if (candidatePair.queryBlock.getPrefixMap().containsKey(token)) {
+//            		queryFrequency = candidatePair.queryBlock.getPrefixMap().get(token).getFrequency();
+//            	} else if (candidatePair.queryBlock.getSuffixMap().containsKey(token)) {
+//            		queryFrequency = candidatePair.queryBlock.getSuffixMap().get(token).getFrequency();
+//            		
+//            	}
+//            	similarity += Math.min(queryFrequency, candidateFrequency);
+//            	if (similarity >= candidatePair.computedThreshold)
+//            		break;
+//            }
+//            
+//            if (similarity < candidatePair.computedThreshold) {
+//                similarity = -1;
+//            }
+            
             if (similarity > 0) {
                 ClonePair cp = new ClonePair(candidatePair.queryBlock.getFunctionId(), candidatePair.queryBlock.getId(),
                         candidatePair.functionIdCandidate, candidatePair.candidateId);

@@ -59,11 +59,12 @@ public class InvertedIndexCreator implements IListener, Runnable {
 
     }
 
-    private void index(Bag bag) throws InterruptedException,
+    static public void index(Bag bag) throws InterruptedException,
             InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException,
             NoSuchMethodException, SecurityException {
-        DocumentForInvertedIndex documentForII = this.documentMaker.prepareDocumentForII(bag);
+    		DocumentMaker documentMaker = new DocumentMaker();
+        DocumentForInvertedIndex documentForII = documentMaker.prepareDocumentForII(bag);
         SearchManager.documentsForII.put(documentForII.id, documentForII);
         Set<Long> docs = null;
         int prefixLength = documentForII.prefixSize;

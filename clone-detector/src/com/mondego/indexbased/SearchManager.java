@@ -461,9 +461,10 @@ public class SearchManager {
         System.out.println("*** Lines succesfully bagged: " + bagsForIndex.size());
         	bagsForIndex.stream().forEach(bag -> {
         		try {
-					SearchManager.bagsToInvertedIndexQueue.send(bag);
+//					SearchManager.bagsToInvertedIndexQueue.send(bag);
+					InvertedIndexCreator.index(bag);
 				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-						| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+						| InvocationTargetException | NoSuchMethodException | SecurityException | InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}

@@ -58,6 +58,7 @@ public class BagSorter implements IListener, Runnable {
         Util.sortBag(bag);
 	long estimatedTime = System.nanoTime() - startTime;
 	logger.info(SearchManager.NODE_PREFIX + " SB, Bag " + bag+ " in " + estimatedTime/1000 + " micros");
-        SearchManager.bagsToInvertedIndexQueue.send(bag);
+//        SearchManager.bagsToInvertedIndexQueue.send(bag);
+	InvertedIndexCreator.index(bag);
     }
 }
