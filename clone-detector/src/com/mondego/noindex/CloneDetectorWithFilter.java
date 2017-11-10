@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.mondego.models.Bag;
+import com.mondego.models.Token;
 import com.mondego.models.TokenFrequency;
 import com.mondego.utility.Util;
 
@@ -32,7 +33,7 @@ public class CloneDetectorWithFilter {
     private CloneHelper cloneHelper;
     private float threshold; // threshold for matching the clones.e.g. .8 or
                              // .9
-    private Map<Long, List<TokenFrequency>> bagToListMap;
+    private Map<Long, List<Token>> bagToListMap;
     private long filterComparision;
     private boolean doSort;
     private Writer analysisWriter;
@@ -63,7 +64,7 @@ public class CloneDetectorWithFilter {
     public CloneDetectorWithFilter() {
         super();
         this.threshold = 1F;
-        this.bagToListMap = new HashMap<Long, List<TokenFrequency>>();
+        this.bagToListMap = new HashMap<Long, List<Token>>();
         this.filterComparision = 0;
         this.doSort = true;
         this.candidateCumulativeTime = 0;
@@ -217,7 +218,7 @@ public class CloneDetectorWithFilter {
     }
 
     private void init() {
-        this.bagToListMap = new HashMap<Long, List<TokenFrequency>>();
+        this.bagToListMap = new HashMap<Long, List<Token>>();
         this.filterComparision = 0;
     }
 
@@ -242,10 +243,10 @@ public class CloneDetectorWithFilter {
         }
     }
 
-    public void detectClones(Iterator<TokenFrequency> bagAItr,
-            Iterator<TokenFrequency> bagBItr, Bag bagB, int computedThreshold,
-            int matchCount, Bag bagA, TokenFrequency tokenFrequencyA,
-            TokenFrequency tokenFrequencyB, int tokenSeenInA, int tokenSeenInB) {
+    public void detectClones(Iterator<Token> bagAItr,
+            Iterator<Token> bagBItr, Bag bagB, int computedThreshold,
+            int matchCount, Bag bagA, Token tokenFrequencyA,
+            Token tokenFrequencyB, int tokenSeenInA, int tokenSeenInB) {
         /*
          * if (bagA.getId() == 11892 && bagB.getId() == 11893) {
          * System.out.println("DEBUG: it is a candidate"); }
@@ -296,9 +297,9 @@ public class CloneDetectorWithFilter {
                 }
             } else {
                 int globalPositionA = this.globalTokenPositionMap
-                        .get(tokenFrequencyA.getToken().getValue());
+                        .get(tokenFrequencyA.getValue());
                 int globalPositionB = this.globalTokenPositionMap
-                        .get(tokenFrequencyB.getToken().getValue());
+                        .get(tokenFrequencyB.getValue());
                 if (globalPositionB <= globalPositionA) {
                     if (this.hasPermission(LOC_FILTER_VALIDATION)) {
                         if (!isSatisfylocFilter(bagA.getSize()
@@ -348,17 +349,17 @@ public class CloneDetectorWithFilter {
      *            the bag to be sorted
      * @return List<TokenFrequency>
      */
-    private List<TokenFrequency> convertToSortedList(Bag bag) {
+    private List<Token> convertToSortedList(Bag bag) {
         if (this.bagToListMap.containsKey(bag)) {
             return bagToListMap.get(bag);
         } else {
-            List<TokenFrequency> list = new ArrayList<TokenFrequency>(bag);
-            Collections.sort(list, new Comparator<TokenFrequency>() {
-                public int compare(TokenFrequency tfFirst,
-                        TokenFrequency tfSecond) {
-                    return globalTokenPositionMap.get(tfFirst.getToken()
+            List<Token> list = new ArrayList<Token>(bag);
+            Collections.sort(list, new Comparator<Token>() {
+                public int compare(Token tfFirst,
+                        Token tfSecond) {
+                    return globalTokenPositionMap.get(tfFirst
                             .getValue())
-                            - globalTokenPositionMap.get(tfSecond.getToken()
+                            - globalTokenPositionMap.get(tfSecond
                                     .getValue());
                 }
             });
@@ -368,7 +369,7 @@ public class CloneDetectorWithFilter {
 
     }
 
-    private List<TokenFrequency> convertToList(Bag bag, boolean sort) {
+    private List<Token> convertToList(Bag bag, boolean sort) {
         if (sort) {
             return this.convertToSortedList(bag);
         } else {
@@ -376,11 +377,11 @@ public class CloneDetectorWithFilter {
         }
     }
 
-    private List<TokenFrequency> convertToList(Bag bag) {
+    private List<Token> convertToList(Bag bag) {
         if (this.bagToListMap.containsKey(bag)) {
             return bagToListMap.get(bag);
         } else {
-            List<TokenFrequency> list = new ArrayList<TokenFrequency>(bag);
+            List<Token> list = new ArrayList<Token>(bag);
             this.bagToListMap.put(bag.getId(), list);
             return list;
         }
@@ -442,13 +443,13 @@ public class CloneDetectorWithFilter {
             Bag bagB, int matchCount, boolean candidate, long startTime,
             int computedThreshold) {
         if (prefixSize <= minLength) { // optimization
-            List<TokenFrequency> listA = this.bagToListMap.get(bagA.getId());
-            List<TokenFrequency> listB = this.bagToListMap.get(bagB.getId());
-            Iterator<TokenFrequency> listAItr = listA.iterator();
-            Iterator<TokenFrequency> listBItr = listB.iterator();
+            List<Token> listA = this.bagToListMap.get(bagA.getId());
+            List<Token> listB = this.bagToListMap.get(bagB.getId());
+            Iterator<Token> listAItr = listA.iterator();
+            Iterator<Token> listBItr = listB.iterator();
             int count = 0;
-            TokenFrequency tokenFrequencyA = listAItr.next();
-            TokenFrequency tokenFrequencyB = listBItr.next();
+            Token tokenFrequencyA = listAItr.next();
+            Token tokenFrequencyB = listBItr.next();
             int tokenSeenInB = tokenFrequencyB.getFrequency();
             int tokenSeenInA = tokenFrequencyA.getFrequency();
             while (true) {
@@ -509,9 +510,9 @@ public class CloneDetectorWithFilter {
                         break;
                     }
                     int globalPositionA = this.globalTokenPositionMap
-                            .get(tokenFrequencyA.getToken().getValue());
+                            .get(tokenFrequencyA.getValue());
                     int globalPositionB = this.globalTokenPositionMap
-                            .get(tokenFrequencyB.getToken().getValue());
+                            .get(tokenFrequencyB.getValue());
                     if (globalPositionB <= globalPositionA) {
                         if (this.hasPermission(LOC_FILTER_CANDIDATES)) {
                             if (!isSatisfylocFilter(bagA.getSize()

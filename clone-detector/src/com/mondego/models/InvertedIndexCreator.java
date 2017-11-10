@@ -70,9 +70,9 @@ public class InvertedIndexCreator implements IListener, Runnable {
         int prefixLength = documentForII.prefixSize;
         int pos = 0;
         TermInfo termInfo = null;
-        for (TokenFrequency tf : bag) {
+        for (Token tf : bag) {
             if (prefixLength > 0) {
-                String term = tf.getToken().getValue();
+                String term = tf.getValue();
                 if (SearchManager.invertedIndex.containsKey(term)){
                     docs= SearchManager.invertedIndex.get(term);
                 }else{

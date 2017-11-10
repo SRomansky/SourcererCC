@@ -13,11 +13,11 @@ public class DocumentForInvertedIndex {
     public int ct;
     public int prefixSize;
     public Map<String,TermInfo> termInfoMap;
-    public Set<TokenFrequency> tokenFrequencies; 
+    public Set<Token> tokenFrequencies; 
     
     public DocumentForInvertedIndex() {
         super();
         this.termInfoMap = new HashMap<String,TermInfo>();
-        this.tokenFrequencies = new LinkedHashSet<TokenFrequency>();
+        this.tokenFrequencies = new LinkedHashSet<Token>();
     }
 }

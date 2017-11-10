@@ -150,9 +150,9 @@ public class CloneHelper {
         // " bagA: "+bagA.getId()+ " bagB: "+bagB.getId());
         // iterate on bagA
         int count = 0;
-        for (TokenFrequency tokenFrequencyA : bagA) {
+        for (Token tokenFrequencyA : bagA) {
             // search this token in bagB
-            TokenFrequency tokenFrequencyB = bagB.get(tokenFrequencyA);
+            Token tokenFrequencyB = bagB.get(tokenFrequencyA);
             this.comparisions += bagB.getComparisions();
             if (null != tokenFrequencyB) {
                 // token found.
@@ -220,24 +220,45 @@ public class CloneHelper {
     }
 
     private void parseAndPopulateBag(Bag bag, String inputString) {
-    		TokenFrequency[] frequencies = Arrays.stream(inputString.split(","))
-    			.map(tokenFreq -> tokenFreq.split("@@::@@"))
-    			.map(pair -> {
-    				String tokenString = this.strip(pair[0]).trim();
-    				if (tokenString.length() > 0) {
-    					Token token = new Token(tokenString);
-    					TokenFrequency tokenFrequency = new TokenFrequency();
-    					tokenFrequency.setToken(token);
+    		String strippedLine = this.strip(inputString);
+//    		TokenFrequency[] frequencies = Arrays.stream(inputString.split(","))
+//    			.map(tokenFreq -> tokenFreq.split("@@::@@"))
+//    			.map(pair -> {
+////    				String tokenString = this.strip(pair[0]).trim();
+//    				String tokenString = pair[0].trim();
+//    				if (tokenString.length() > 0) {
+//    					Token token = new Token(tokenString);
+//    					TokenFrequency tokenFrequency = new TokenFrequency();
+//    					tokenFrequency.setToken(token);
+//
+//    					tokenFrequency.setFrequency(Integer.parseInt(pair[1]));
+//    					return tokenFrequency;
+//    					//bag.add(tokenFrequency);
+//    				}
+//    				return null; // ????
+//    		    })
+//    			.filter(f -> f != null)
+//    			.toArray(TokenFrequency[]::new);
+//    		bag.addAll(Arrays.asList(frequencies));
 
-    					tokenFrequency.setFrequency(Integer.parseInt(pair[1]));
-    					return tokenFrequency;
-    					//bag.add(tokenFrequency);
-    				}
-    				return null; // ????
-    		    })
-    			.filter(f -> f != null)
-    			.toArray(TokenFrequency[]::new);
-    		bag.addAll(Arrays.asList(frequencies));
+//    		Token fake = new Token("fake");
+//    		TokenFrequency test = new TokenFrequency();
+//    		fake.setFrequency(1);
+    		
+//    		test.setToken(fake);
+//    		test.setFrequency(1);
+    		for (String stringPairs : strippedLine.split(",")) {
+    			String[] pair = stringPairs.split("@@::@@");
+    			String tokenString = pair[0].trim();
+    			if (tokenString.length() > 0) {
+    				Token t = new Token(tokenString);
+    				t.setFrequency(Integer.parseInt(pair[1]));
+//    				TokenFrequency tf = new TokenFrequency();
+//    				tf.setToken(t);
+//    				tf.setFrequency(Integer.parseInt(pair[1]));
+    				bag.add(t);
+    			}
+    		}
     	
 //        Scanner scanner = new Scanner(inputString);
 //        scanner.useDelimiter(",");
@@ -335,11 +356,13 @@ public class CloneHelper {
 
     private void parseAndPopulateQueryBlock(List<Entry<String, TokenInfo>> listOfTokens, String inputString,
             String delimeterTokenFreq, String delimeterTokenAndFreq) {
-    	
-    		Entry[] entries = Arrays.stream(inputString.split(delimeterTokenFreq))
+    		
+    		String strippedLine = this.strip(inputString);
+    		Entry[] entries = Arrays.stream(strippedLine.split(delimeterTokenFreq))
     			.map(f -> f.split(delimeterTokenAndFreq))
     			.map(pair -> {
-    				String tokenString = this.strip(pair[0]).trim();
+//    				String tokenString = this.strip(pair[0]).trim();
+    				String tokenString = pair[0].trim();
     				
     				if (tokenString.length() == 0) return null;
     				

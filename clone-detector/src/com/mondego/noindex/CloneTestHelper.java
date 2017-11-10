@@ -58,10 +58,12 @@ public class CloneTestHelper {
         Bag bag = new Bag(i);
         for (int j = 0; j < 10; j++) {
             Token t = getTestToken();
-            TokenFrequency tFrequency = new TokenFrequency();
-            tFrequency.setToken(t);
-            tFrequency.setFrequency(Util.getRandomNumber(1, 1));
-            bag.add(tFrequency);
+//            Token tFrequency = new Token();
+//            tFrequency.setToken(t);
+//            tFrequency.setFrequency(Util.getRandomNumber(1, 1));
+            
+            t.setFrequency(Util.getRandomNumber(1, 1));
+            bag.add(t);
         }
         return bag;
     }
@@ -69,44 +71,44 @@ public class CloneTestHelper {
     public static Map<String, Integer> getGlobalTokenPositionMap(
             Set<Bag> setA, Set<Bag> setB) {
         Map<String, Integer> tokenPositionMap = new HashMap<String, Integer>();
-        Map<TokenFrequency, TokenFrequency> map = new HashMap<TokenFrequency, TokenFrequency>();
+        Map<Token, Token> map = new HashMap<Token, Token>();
         fetchTokenFrequencyList(map, setA);
         fetchTokenFrequencyList(map, setB);
-        List<TokenFrequency> list = new ArrayList<TokenFrequency>( map.values());
-        Collections.sort(list, new Comparator<TokenFrequency>() {
-            public int compare(TokenFrequency tfFirst, TokenFrequency tfSecond) {
+        List<Token> list = new ArrayList<Token>( map.values());
+        Collections.sort(list, new Comparator<Token>() {
+            public int compare(Token tfFirst, Token tfSecond) {
                 return tfFirst.getFrequency() - tfSecond.getFrequency();
             }
         });
         int position = 0;
-        for (TokenFrequency tokenFrequency : list) {
-            tokenPositionMap.put(tokenFrequency.getToken().getValue(), position);
+        for (Token tokenFrequency : list) {
+            tokenPositionMap.put(tokenFrequency.getValue(), position);
             position++;
         }
         return tokenPositionMap;
     }
 
     private static void fetchTokenFrequencyList(
-            Map<TokenFrequency, TokenFrequency> map, Set<Bag> setA) {
+            Map<Token, Token> map, Set<Bag> setA) {
         for (Bag bag : setA) {
             mergeCollections(map, bag);
         }
     }
 
     private static void mergeCollections(
-            Map<TokenFrequency, TokenFrequency> map,
-            Collection<TokenFrequency> listB) {
-        for (TokenFrequency tf : listB) {
+            Map<Token, Token> map,
+            Collection<Token> listB) {
+        for (Token tf : listB) {
             if (map.containsKey(tf)) {
-                TokenFrequency tokenFrequency = map.get(tf);
+            	Token tokenFrequency = map.get(tf);
                 tokenFrequency.setFrequency(tokenFrequency.getFrequency()
                         + tf.getFrequency());
             } else {
-                TokenFrequency tokenFrequency = new TokenFrequency();
-                Token token = new Token(tf.getToken().getValue());
-                tokenFrequency.setToken(token);
-                tokenFrequency.setFrequency(tf.getFrequency());
-                map.put(tokenFrequency, tokenFrequency);
+//            	Token tokenFrequency = new TokenFrequency();
+//                Token token = new Token(tf.getValue());
+//                tokenFrequency.setToken(token);
+//                tokenFrequency.setFrequency(tf.getFrequency());
+                map.put(tf, tf);
             }
         }
     }

@@ -147,7 +147,7 @@ public class CloneValidator implements IListener, Runnable {
          * simInfo.candidateMatchPosition); logger.debug("th: "+
          * computedThreshold); logger.debug("sim: "+ similarity);
          */
-        for (TokenFrequency tf : simInfo.doc.tokenFrequencies) {
+        for (Token tf : simInfo.doc.tokenFrequencies) {
             if (Util.isSatisfyPosFilter(similarity, queryBlock.getSize(), simInfo.queryMatchPosition, candidateSize,
                     simInfo.candidateMatchPosition, computedThreshold)) {
                 // System.out.println("sim: "+ similarity);
@@ -158,18 +158,18 @@ public class CloneValidator implements IListener, Runnable {
                     matchFound = false;
                     if (simInfo.queryMatchPosition < queryBlock.getPrefixMapSize()) {
                         // check in prefix
-                        if (queryBlock.getPrefixMap().containsKey(tf.getToken().getValue())) {
+                        if (queryBlock.getPrefixMap().containsKey(tf.getValue())) {
                             matchFound = true;
-                            tokenInfo = queryBlock.getPrefixMap().get(tf.getToken().getValue());
+                            tokenInfo = queryBlock.getPrefixMap().get(tf.getValue());
                             similarity = updateSimilarityHelper(simInfo, tokenInfo, similarity, tf.getFrequency(),
-                                    tf.getToken().getValue());
+                                    tf.getValue());
                         }
                     }
                     // check in suffix
-                    if (!matchFound && queryBlock.getSuffixMap().containsKey(tf.getToken().getValue())) {
-                        tokenInfo = queryBlock.getSuffixMap().get(tf.getToken().getValue());
+                    if (!matchFound && queryBlock.getSuffixMap().containsKey(tf.getValue())) {
+                        tokenInfo = queryBlock.getSuffixMap().get(tf.getValue());
                         similarity = updateSimilarityHelper(simInfo, tokenInfo, similarity, tf.getFrequency(),
-                                tf.getToken().getValue());
+                                tf.getValue());
                     }
                     if (similarity >= computedThreshold) {
                         return similarity;

@@ -37,6 +37,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.mondego.indexbased.SearchManager;
 import com.mondego.models.Bag;
+import com.mondego.models.Token;
 import com.mondego.models.TokenFrequency;
 import com.mondego.models.TokenInfo;
 
@@ -246,16 +247,16 @@ public class Util {
     public final static Map<String, Long> cache = lruCache(500000*2*12);
 
     public static void sortBag(final Bag bag) {
-        List<TokenFrequency> bagAsList = new ArrayList<TokenFrequency>(bag);
+        List<Token> bagAsList = new ArrayList<Token>(bag);
         logger.debug("bag to sort: "+bag);
         try {
-            Collections.sort(bagAsList, new Comparator<TokenFrequency>() {
-                public int compare(TokenFrequency tfFirst,
-                        TokenFrequency tfSecond) {
+            Collections.sort(bagAsList, new Comparator<Token>() {
+                public int compare(Token tfFirst,
+                		Token tfSecond) {
                     Long frequency1 = 0l;
                     Long frequency2 = 0l;
-                    String k1 = tfFirst.getToken().getValue();
-                    String k2 = tfSecond.getToken().getValue();
+                    String k1 = tfFirst.getValue();
+                    String k2 = tfSecond.getValue();
                     if (cache.containsKey(k1)) {
                         frequency1 = cache.get(k1);
                         if(null==frequency1){
@@ -294,7 +295,7 @@ public class Util {
                 }
             });
             bag.clear();
-            for (TokenFrequency tf : bagAsList) {
+            for (Token tf : bagAsList) {
                 bag.add(tf);
             }
         } catch (NullPointerException e) {

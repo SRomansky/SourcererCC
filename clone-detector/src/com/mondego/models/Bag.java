@@ -14,7 +14,7 @@ import com.mondego.utility.Util;
  * @author vaibhavsaini
  * 
  */
-public class Bag extends LinkedHashSet<TokenFrequency>  { // TODO: why is this
+public class Bag extends LinkedHashSet<Token>  { // TODO: why is this
                                                          // not a
                                                          // linkedhashmap?
     /**
@@ -109,9 +109,9 @@ public class Bag extends LinkedHashSet<TokenFrequency>  { // TODO: why is this
         return this.getFunctionId()+":"+this.getId()+":"+ this.getSize()+":"+ this.getNumUniqueTokens();
     }
 
-    public TokenFrequency get(TokenFrequency tokenFrequency) {
+    public Token get(Token tokenFrequency) {
         this.comparisions = 0;
-        for (TokenFrequency tf : this) {
+        for (Token tf : this) {
             this.comparisions += 1;
             if (tf.equals(tokenFrequency)) {
                 return tf;
@@ -122,7 +122,7 @@ public class Bag extends LinkedHashSet<TokenFrequency>  { // TODO: why is this
 
     public int getSize() {
         if (this.size == 0) {
-            for (TokenFrequency tf : this) {
+            for (Token tf : this) {
                 this.size += tf.getFrequency();
             }
         }
@@ -155,8 +155,8 @@ public class Bag extends LinkedHashSet<TokenFrequency>  { // TODO: why is this
         StringBuilder metaData = new StringBuilder();
         StringBuilder data = new StringBuilder();
         String sep = "";
-        for (TokenFrequency tf : this){
-            data.append(sep).append(tf.getToken().getValue()).append("@@::@@").append(tf.getFrequency());
+        for (Token tf : this){
+            data.append(sep).append(tf.getValue()).append("@@::@@").append(tf.getFrequency());
             sep=",";
         }
         sep =",";

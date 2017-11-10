@@ -453,10 +453,21 @@ public class SearchManager {
         }
         
         System.out.println("*** Read: " + lines.size() + " lines.");
-        List<Bag> bagsForIndex = lines.stream()
-        		.map(l -> theInstance.cloneHelper.deserialise(l))
-        		.filter(bag -> bag != null)
-        		.collect(Collectors.toList());
+//        List<Bag> bagsForIndex = lines.stream()
+//        		.map(l -> theInstance.cloneHelper.deserialise(l))
+//        		.filter(bag -> bag != null)
+//        		.collect(Collectors.toList());
+        int parseCount = 0;
+        List<Bag> bagsForIndex = new ArrayList<Bag>();
+        for (String l : lines) {
+        		Bag b = theInstance.cloneHelper.deserialise(l);
+        		if (b == null)
+        			continue;
+        		bagsForIndex.add(b);
+        		parseCount++;
+        		if (parseCount % 100000 == 0) 
+        			System.out.println("*** parsed: " + parseCount + " bags. ***");
+        }
         
         System.out.println("*** Lines succesfully bagged: " + bagsForIndex.size());
         	bagsForIndex.stream().forEach(bag -> {

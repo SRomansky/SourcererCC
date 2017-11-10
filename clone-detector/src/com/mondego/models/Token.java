@@ -10,6 +10,22 @@ package com.mondego.models;
 public class Token {
     private String value; // this is the face value of a token, e.g. 'for'
     private int id; // unique id of a token
+    private int frequency;
+    
+	
+	/**
+     * @return the frequency
+     */
+    public int getFrequency() {
+        return frequency;
+    }
+    /**
+     * @param frequency the frequency to set
+     */
+    public void setFrequency(int frequency) {
+        this.frequency = frequency;
+    }
+    
     
     /**
      * @return the id
@@ -78,6 +94,9 @@ public class Token {
      */
     public String getValue() {
         return value;
+    }
+    public String getToken() {
+    		return value;
     }
 
     /**

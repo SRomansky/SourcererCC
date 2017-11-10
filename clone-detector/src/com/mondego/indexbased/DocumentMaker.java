@@ -19,6 +19,7 @@ import org.apache.lucene.index.Term;
 
 import com.mondego.models.Bag;
 import com.mondego.models.DocumentForInvertedIndex;
+import com.mondego.models.Token;
 import com.mondego.models.TokenFrequency;
 import com.mondego.utility.BlockInfo;
 
@@ -110,10 +111,10 @@ public class DocumentMaker {
         document.add(idField);
         
         StringBuilder tokenString = new StringBuilder();
-        for (TokenFrequency tf : bag) {
+        for (Token tf : bag) {
             // System.out.println(tf.getToken().getValue() +
             // ":"+tf.getFrequency());
-            tokenString.append(tf.getToken().getValue() + ":" + tf.getFrequency() + "::");
+            tokenString.append(tf.getValue() + ":" + tf.getFrequency() + "::");
         }
         StoredField strField = new StoredField("tokens", tokenString.toString().trim());
         document.add(strField);
