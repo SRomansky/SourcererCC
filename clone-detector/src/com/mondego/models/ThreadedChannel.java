@@ -44,14 +44,6 @@ public class ThreadedChannel<E> {
     	
         final Runnable o = this.workerType.getDeclaredConstructor(e.getClass()).newInstance(e);
         try {
-//        	if (blockedRecorder.containsKey(this.workerType.getCanonicalName())) {
-//        		blockedRecorder.put(this.workerType.getCanonicalName(), blockedRecorder.get(this.workerType.getCanonicalName()) + 1);
-//        	} else {
-//        		blockedRecorder.put(this.workerType.getCanonicalName(), 1);
-//        	}
-//        	
-//        	if (blockedRecorder.values().stream().mapToInt(Integer::intValue).sum() % 1000000 == 0)
-//        		System.out.println(blockedRecorder.toString());
             semaphore.acquire();
         } catch (InterruptedException ex) {
             logger.error("Caught interrupted exception " + ex);

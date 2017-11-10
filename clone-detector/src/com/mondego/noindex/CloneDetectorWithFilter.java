@@ -128,18 +128,11 @@ public class CloneDetectorWithFilter {
             cd.cloneHelper = cloneHelper;
             cd.init();
             cd.runExperiment();
-            /*System.out.println("unique clone pairs : " + cd.cloneSet.size());
-            List<String> cloneList = new ArrayList<String>(cd.cloneSet);
-            Collections.sort(cloneList);
-            for (String clonePair : cloneList){
-                System.out.println(clonePair);
-            }*/
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         } finally {
             Util.closeOutputFile(cd.analysisWriter);
-            // Util.closeOutputFile(cd.prefixWriter);
         }
     }
 
@@ -247,25 +240,12 @@ public class CloneDetectorWithFilter {
             Iterator<Token> bagBItr, Bag bagB, int computedThreshold,
             int matchCount, Bag bagA, Token tokenFrequencyA,
             Token tokenFrequencyB, int tokenSeenInA, int tokenSeenInB) {
-        /*
-         * if (bagA.getId() == 11892 && bagB.getId() == 11893) {
-         * System.out.println("DEBUG: it is a candidate"); }
-         */
         while (true) {
             this.comparisions += 1;
             if (tokenFrequencyB.equals(tokenFrequencyA)) {
                 matchCount += Math.min(tokenFrequencyA.getFrequency(),
                         tokenFrequencyB.getFrequency());
-                /*
-                 * if (bagA.getId() == 11892 && bagB.getId() == 11893) {
-                 * System.out.println("DEBUG: match count " + matchCount +
-                 * "computedThreshold " + computedThreshold); }
-                 */
                 if (matchCount >= computedThreshold) {
-                    /*
-                     * if (bagA.getId() == 11892 && bagB.getId() == 11893) {
-                     * System.out.println("DEBUG: reporting it"); }
-                     */
                     // report clone.
                     String clonePair = "";
                     if (bagA.getId() < bagB.getId()) {
@@ -333,7 +313,6 @@ public class CloneDetectorWithFilter {
             }
 
         }
-        // this.comparisions += bagB.comparisions;
     }
 
     private boolean isSatisfylocFilter(int sizeA, int sizeB, int matchCount,
@@ -411,17 +390,6 @@ public class CloneDetectorWithFilter {
             computedThreshold = computedThreshold_overlap;
         }
         int prefixSize = (maxLength + 1) - computedThreshold;// this.computePrefixSize(maxLength);
-        /*
-         * if (bagA.getId() == 11892 && bagB.getId() == 11893) {
-         * System.out.println("DEBUG: prefix " + prefixSize + ", " +
-         * "computed threshold " + computedThreshold + ", bagA.size " +
-         * bagA.getSize() + "bagB.size " + bagB.getSize() + ", th " +
-         * (this.th/this.MUL_FACTOR) + ", threshold " + this.threshold +
-         * ", isJaccard " + this.useJaccardSimilarity + ", maxlength " +
-         * maxLength + ", maxlength*th " + (this.th * maxLength) /
-         * (10*this.MUL_FACTOR) + ", celi" + Math.ceil((this.th * maxLength) /
-         * (10*this.MUL_FACTOR))); }
-         */
         boolean candidate = false;
         int matchCount = 0;
         if (hasPermission(LOC_FILTER_CANDIDATES)) {
@@ -560,32 +528,6 @@ public class CloneDetectorWithFilter {
                 || this.locFilter.equals(caller);
     }
 
-    /*
-     * private boolean incrementItr(int count, int tokenSeenInA, int
-     * tokenSeenInB, int prefixSize, TokenFrequency tokenFrequencyA,
-     * TokenFrequency tokenFrequencyB, Iterator<TokenFrequency> listBItr,
-     * Iterator<TokenFrequency> listAItr) {
-     * 
-     * count = Math.min(tokenSeenInA, tokenSeenInB); if (count >= prefixSize) {
-     * return true; } int globalPositionA =
-     * this.globalTokenPositionMap.get(tokenFrequencyA .getToken().getValue());
-     * int globalPositionB = this.globalTokenPositionMap.get(tokenFrequencyB
-     * .getToken().getValue()); return this .incItr(globalPositionB,
-     * globalPositionA, tokenFrequencyB, tokenFrequencyA, listBItr,
-     * tokenSeenInA, tokenSeenInB, listAItr);
-     * 
-     * }
-     * 
-     * private boolean incItr(int globalPositionB, int globalPositionA,
-     * TokenFrequency tokenFrequencyB, TokenFrequency tokenFrequencyA,
-     * Iterator<TokenFrequency> listBItr, int tokenSeenInA, int tokenSeenInB,
-     * Iterator<TokenFrequency> listAItr) { if (globalPositionB <=
-     * globalPositionA) { if (listBItr.hasNext()) { tokenFrequencyB =
-     * listBItr.next(); tokenSeenInB += tokenFrequencyB.getFrequency(); } else {
-     * return true; } } else { if (listAItr.hasNext()) { tokenFrequencyA =
-     * listAItr.next(); tokenSeenInA += tokenFrequencyA.getFrequency(); } else {
-     * return true; } } return false; }
-     */
 
     /**
      * @return the globalTokenPositionMap

@@ -58,10 +58,6 @@ public class CloneTestHelper {
         Bag bag = new Bag(i);
         for (int j = 0; j < 10; j++) {
             Token t = getTestToken();
-//            Token tFrequency = new Token();
-//            tFrequency.setToken(t);
-//            tFrequency.setFrequency(Util.getRandomNumber(1, 1));
-            
             t.setFrequency(Util.getRandomNumber(1, 1));
             bag.add(t);
         }
@@ -104,10 +100,6 @@ public class CloneTestHelper {
                 tokenFrequency.setFrequency(tokenFrequency.getFrequency()
                         + tf.getFrequency());
             } else {
-//            	Token tokenFrequency = new TokenFrequency();
-//                Token token = new Token(tf.getValue());
-//                tokenFrequency.setToken(token);
-//                tokenFrequency.setFrequency(tf.getFrequency());
                 map.put(tf, tf);
             }
         }

@@ -78,7 +78,6 @@ public class CandidateSearcher implements IListener, Runnable {
             long estimatedTime = System.nanoTime() - startTime;
             logger.debug(SearchManager.NODE_PREFIX + " CandidateSearcher, QueryBlock " + queryBlock + " in "
                     + estimatedTime / 1000 + " micros");
-//            SearchManager.queryCandidatesQueue.send(qc);
             CandidateProcessor.processResultWithFilter(qc);
         }
     }
@@ -121,8 +120,6 @@ public class CandidateSearcher implements IListener, Runnable {
                         simInfo.doc = doc;
                         simInfo.candidateSize = doc.size;
                         simInfo.similarity = Math.min(searchTermFreq, doc.termInfoMap.get(searchTerm).frequency);
-                        // System.out.println("before putting in simmap "+
-                        // Util.debug_thread());
                         simMap.put(doc.id, simInfo);
                     }
                     simInfo.queryMatchPosition = termsSeenInQuery;

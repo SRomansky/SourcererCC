@@ -14,7 +14,6 @@ public class CandidatePair {
             long functionIdCandidate, long candidateId) {
         super();
         this.queryBlock = queryBlock;
-        //this.candidateTokenFrequencies = candidateTokenFrequencies;
         this.simInfo = simInfo;
         this.computedThreshold = computedThreshold;
         this.candidateSize = candidateSize;

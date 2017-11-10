@@ -47,33 +47,6 @@ public class DocumentMaker {
         super();
     }
 
-    /**
-     * index the code block
-     */
-/*    public void indexCodeBlock(Bag bag) {
-        Document document;
-        document = this.prepareDocument(bag);
-        try {
-            this.indexWriter.addDocument(document);
-        } catch (IOException e) {
-            System.out
-                    .println("EXCEPTION caught while indexing document for bag "
-                            + bag.getId());
-            e.printStackTrace();
-        }
-    }*/
-
-/*    public void fwdIndexCodeBlock(Bag bag) {
-        Document document = this.prepareDocumentForFwdIndex(bag);
-        try {
-            this.indexWriter.addDocument(document);
-        } catch (IOException e) {
-            System.out
-                    .println("EXCEPTION caught while indexing document for bag "
-                            + bag.getId());
-            e.printStackTrace();
-        }
-    }*/
 
     private Document wfmEntry;
     private StringField wordField;
@@ -106,14 +79,10 @@ public class DocumentMaker {
         Document document = new Document();
         StringField idField = new StringField("id", bag.getId() + "",
                 Field.Store.NO);
-        //idField.fieldType().setIndexed(true);
-        //idField.fieldType().freeze();
         document.add(idField);
         
         StringBuilder tokenString = new StringBuilder();
         for (Token tf : bag) {
-            // System.out.println(tf.getToken().getValue() +
-            // ":"+tf.getFrequency());
             tokenString.append(tf.getValue() + ":" + tf.getFrequency() + "::");
         }
         StoredField strField = new StoredField("tokens", tokenString.toString().trim());
@@ -151,9 +120,6 @@ public class DocumentMaker {
     }
 
 	public void indexWFMEntries(Map<String, Long> newEntries) {
-		// TODO Auto-generated method stub
-		
-//		this.indexWriter.updateDocuments(new Term("key"), newEntries, null);
 		List<Document> docs = newEntries.keySet().stream().map(k -> {
 			Document d = new Document();
 			StringField s = new StringField("key", k, Field.Store.NO);
@@ -167,31 +133,8 @@ public class DocumentMaker {
 		try {
 			this.indexWriter.updateDocuments(null, docs);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} // ?
-//		
-//		// Create the document and fields only once, for no GC
-//		if (wfmEntry == null) {
-//		    wfmEntry = new Document();
-//		    wordField = new StringField("key", word,
-//						       Field.Store.NO);
-//		    wfmEntry.add(wordField);
-//		    freqField = new StoredField("frequency", frequency);
-//		    wfmEntry.add(freqField);
-//		}
-//		else {
-//		    wordField.setStringValue(word);
-//		    freqField.setLongValue(frequency);
-//		}
-//
-//	        try {
-//		    this.indexWriter.updateDocument(new Term("key", word), wfmEntry);
-//	        } catch (IOException e) {
-//	            logger.error("EXCEPTION caught while indexing document for wfm entry "
-//	                            + word + ":" + frequency);
-//	            e.printStackTrace();
-//	        }
 	}
 
 }

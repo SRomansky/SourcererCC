@@ -96,8 +96,6 @@ public class SearchManager {
     	return properties;
     }
     
-//    private ThreadedChannel<Object> pool = new ThreadedChannel<Object>(20);
-    
     public static Object lock = new Object();
     private int qlq_thread_count;
     private int qbq_thread_count;
@@ -164,7 +162,6 @@ public class SearchManager {
             this.threadsToProcessBagsToSortQueue = Integer.parseInt(properties.getProperty("BTSQ_THREADS", "1"));
             this.threadToProcessIIQueue = Integer.parseInt(properties.getProperty("BTIIQ_THREADS", "1"));
             this.threadsToProcessFIQueue = Integer.parseInt(properties.getProperty("BTFIQ_THREADS", "1"));
-//            this.isSharding = Boolean.parseBoolean(properties.getProperty("IS_SHARDING"));
             
         } catch (NumberFormatException e) {
             logger.error(e.getMessage() + ", exiting now", e);
@@ -176,8 +173,6 @@ public class SearchManager {
 
             startQueryThreads();
         } else if (SearchManager.ACTION.equals(ACTION_CREATE_SHARDS)) {
-            // indexerWriters = new ArrayList<IndexWriter>();
-//            this.createShards(true);
             System.err.println("depricated action: " + ACTION_CREATE_SHARDS);
             System.exit(1);
         }
@@ -303,9 +298,6 @@ public class SearchManager {
         try {
         	Util.closeOutputFile(SearchManager.clonesWriter);
         	Util.closeOutputFile(SearchManager.recoveryWriter);
-//        	if (SearchManager.ACTION.equals(ACTION_SEARCH)) {
-//        		theInstance.backupOutput();
-//        	}
         } catch (Exception e) {
             logger.error("exception caught in main " + e.getMessage());
         }
@@ -329,13 +321,6 @@ public class SearchManager {
                 + System.lineSeparator() + " BQ_THREADS: " + this.threadsToProcessBagsToSortQueue
                 + System.lineSeparator() + " SBQ_THREADS: " + this.threadToProcessIIQueue + System.lineSeparator()
                 + " IIQ_THREADS: " + this.threadsToProcessFIQueue + System.lineSeparator());
-//        SearchManager.queryLineQueue = this.pool;
-//        SearchManager.queryBlockQueue = SearchManager.queryLineQueue;
-//        SearchManager.queryCandidatesQueue = SearchManager.queryLineQueue;
-//        SearchManager.verifyCandidateQueue = SearchManager.queryLineQueue;
-//        SearchManager.reportCloneQueue = SearchManager.queryLineQueue;
-        
-    
     }
     
     public void stopQueryThreads() {
@@ -349,9 +334,6 @@ public class SearchManager {
         SearchManager.verifyCandidateQueue.shutdown();
         logger.info("shutting down RCQ, " + System.currentTimeMillis());
         SearchManager.reportCloneQueue.shutdown();
-//        SearchManager.queryLineQueue.shutdown();
-//        this.pool = new ThreadedChannel<Object>(20);
-//        this.pool.finish();
     }
     
     
@@ -364,62 +346,7 @@ public class SearchManager {
         SearchManager.statusCounter = 0;
 	}
 
-    private void readRunMetadata() {
-        File f = new File(Util.RUN_METADATA);
-        BufferedReader br = null;
-        if (f.exists()) {
-            logger.debug(Util.RUN_METADATA + " file exists, reading it to get the run metadata");
-            try {
-                br = Util.getReader(f);
-                String line = br.readLine().trim();
-                if (!line.isEmpty()) {
-                    SearchManager.RUN_COUNT = Long.parseLong(line);
-                    logger.debug("last run count was: " + SearchManager.RUN_COUNT);
-                } else {
-                    SearchManager.RUN_COUNT = 1;
-                }
-            } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (NumberFormatException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } finally {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        } else {
-            SearchManager.RUN_COUNT = 1;
-        }
-
-    }
-
-    private void backupOutput() throws IOException {
-        theInstance.readRunMetadata();
-        String destDir = Util.OUTPUT_BACKUP_DIR + "/" + SearchManager.RUN_COUNT + "/" + SearchManager.NODE_PREFIX;
-        Util.createDirs(destDir); // creates if it doesn't exist
-        String sourceDir = SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR;
-        logger.debug("moving " + sourceDir + " to " + destDir);
-        FileUtils.copyDirectory(new File(sourceDir), new File(destDir), true); // copy
-                                                                               // the
-                                                                               // output
-                                                                               // folder
-                                                                               // instead
-                                                                               // of
-                                                                               // moving
-                                                                               // it.
-    }
-
-
     public int createIndexes(File candidateFile, int avoidLines) throws FileNotFoundException {
-        //SearchManager.invertedIndex = new ConcurrentHashMap<String, Set<Long>>();
-        //SearchManager.documentsForII = new ConcurrentHashMap<Long, DocumentForInvertedIndex>();
         BufferedReader br = new BufferedReader(new FileReader(candidateFile));
         String line = "";
         long size = 0;
@@ -427,8 +354,6 @@ public class SearchManager {
         long maxMemory = this.max_index_size*gig;
         int completedLines = 0;
         
-//        SearchManager.bagsToInvertedIndexQueue = this.pool;
-//        SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue, InvertedIndexCreator.class;
         ArrayList<String> lines = new ArrayList<String>();
         
         SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
@@ -472,7 +397,6 @@ public class SearchManager {
         System.out.println("*** Lines succesfully bagged: " + bagsForIndex.size());
         	bagsForIndex.stream().forEach(bag -> {
         		try {
-//					SearchManager.bagsToInvertedIndexQueue.send(bag);
 					InvertedIndexCreator.index(bag);
 				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 						| InvocationTargetException | NoSuchMethodException | SecurityException | InterruptedException e) {
@@ -482,59 +406,6 @@ public class SearchManager {
         });
         
         SearchManager.bagsToInvertedIndexQueue.shutdown();
-        // this change seems to improve performance.
-        
-//        try {
-//            // SearchManager.bagsToSortQueue = new ThreadedChannel<Bag>(
-//            // this.threadsToProcessBagsToSortQueue, BagSorter.class);
-//            SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
-//                    InvertedIndexCreator.class); //this.pool;
-//            while ((line = br.readLine()) != null && line.trim().length() > 0) {
-//                completedLines++;
-//                if (completedLines <= avoidLines) {
-//                    continue;
-//                }
-//                Bag bag = theInstance.cloneHelper.deserialise(line);
-//                if (null != bag) {
-//                    size = size + (bag.getNumUniqueTokens() * 300); // approximate mem utilization. 1 key value pair = 300 bytes
-//                    logger.debug("indexing "+ completedLines + " bag: "+ bag + ", mem: "+size + " bytes");
-//                    SearchManager.bagsToInvertedIndexQueue.send(bag);
-//                    if (size >= maxMemory) {
-//                        return completedLines;
-//                    }
-//                }
-//            }
-//        } catch (IOException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        } catch (InstantiationException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        } catch (IllegalAccessException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        } catch (IllegalArgumentException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        } catch (InvocationTargetException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        } catch (NoSuchMethodException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        } catch (SecurityException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        } finally {
-//            // SearchManager.bagsToSortQueue.shutdown();
-//            SearchManager.bagsToInvertedIndexQueue.shutdown();
-////            this.pool = new ThreadedChannel<Object>(20);
-//            try {
-//                br.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
         return -1;
     }
 

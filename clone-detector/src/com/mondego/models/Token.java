@@ -95,9 +95,6 @@ public class Token {
     public String getValue() {
         return value;
     }
-    public String getToken() {
-    		return value;
-    }
 
     /**
      * @param value the value to set

@@ -20,11 +20,6 @@ public class BagSorter implements IListener, Runnable {
     @Override
     public void run() {
         try {
-            /*
-             * System.out.println(SearchManager.NODE_PREFIX +
-             * ", size of bagsToSortQueue " +
-             * SearchManager.bagsToSortQueue.size());
-             */
             this.sortBag(this.bag);
         } catch (NoSuchElementException e) {
             e.printStackTrace();
@@ -58,7 +53,6 @@ public class BagSorter implements IListener, Runnable {
         Util.sortBag(bag);
 	long estimatedTime = System.nanoTime() - startTime;
 	logger.info(SearchManager.NODE_PREFIX + " SB, Bag " + bag+ " in " + estimatedTime/1000 + " micros");
-//        SearchManager.bagsToInvertedIndexQueue.send(bag);
 	InvertedIndexCreator.index(bag);
     }
 }

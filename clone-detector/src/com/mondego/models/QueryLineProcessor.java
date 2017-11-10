@@ -19,7 +19,6 @@ public class QueryLineProcessor implements Runnable {
 
     public QueryLineProcessor(String line) {
         this.line = line;
-//        searchManager = SearchManager.theInstance;
     }
 
     public void run() {
@@ -51,7 +50,6 @@ public class QueryLineProcessor implements Runnable {
     		long estimatedTime = System.nanoTime() - startTime;
     		logger.debug(SearchManager.NODE_PREFIX + " QLP processed QueryBlock " + queryBlock + " in "
     				+ estimatedTime / 1000 + " micros");
-    		//            SearchManager.queryBlockQueue.send(queryBlock);
     		CandidateSearcher.searchCandidates(queryBlock);
     	} catch (IOException | InterruptedException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
     		// TODO Auto-generated catch block
@@ -64,9 +62,6 @@ public class QueryLineProcessor implements Runnable {
     		e.printStackTrace();
     	}
             
-            // System.out.println(SearchManager.NODE_PREFIX +
-            // ", line number: "+ count);
-
     }
 
     static public QueryBlock getNextQueryBlock(String line) throws ParseException, IllegalArgumentException {

@@ -150,7 +150,7 @@ public class DaemonTest {
 	 * Check that the client can run clone detection comparing the queryset to the dataset.
 	 * Check that the report is generated properly by the client.
 	 */
-	@Test
+//	@Test
 	public void testQuery100m() {
 		// Assume that clone-detector/src/test/input contains valid .license, .header, .code, and dataset/*.token files.
 		// Copies the input folder contents to the query folder.
@@ -260,7 +260,7 @@ public class DaemonTest {
 	 * Check that the client can run clone detection comparing the queryset to the dataset.
 	 * Check that the report is generated properly by the client.
 	 */
-	@Test
+//	@Test
 	public void testQuery10m() {
 		// Assume that clone-detector/src/test/input contains valid .license, .header, .code, and dataset/*.token files.
 		// Copies the input folder contents to the query folder.
@@ -477,6 +477,16 @@ public class DaemonTest {
 		Daemon.RESET_GTPM = false;
         logTime("Total 1000m index run time");
         
+     // setup 10m dataset directories
+        setSearchManagerProperties(testDataPath, "10m", "10m");
+
+        setStartTime();
+        Daemon.RESET_GTPM = true;  // first time using 100m dataset, index it even if a gtpmindex file exists.
+        instance.daemon.start(); // load 100m dataset and index it
+        Daemon.RESET_GTPM = false;
+        logTime("Total 10m index run time");
+        
+        
         // setup 100m dataset directories
         setSearchManagerProperties(testDataPath, "100m", "100m");
 
@@ -485,9 +495,19 @@ public class DaemonTest {
         instance.daemon.start(); // load 100m dataset and index it
         Daemon.RESET_GTPM = false;
         logTime("Total 100m index run time");
+        
+     // setup 5000m dataset directories
+        setSearchManagerProperties(testDataPath, "5000m", "5000m");
+
+        setStartTime();
+        Daemon.RESET_GTPM = true;  // first time using 100m dataset, index it even if a gtpmindex file exists.
+        instance.daemon.start(); // load 100m dataset and index it
+        Daemon.RESET_GTPM = false;
+        logTime("Total 5000m index run time");
 	}
 	
-//    @Test
+	
+    @Test
 	public void testBenchmark() {
 		// This test requires the benchmark_sets.zip file. It is not included in the github repository.
 		// The zip file should be extracted in src/test/ to make src/test/benchmark_sets

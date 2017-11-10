@@ -357,13 +357,6 @@ public class Util {
         return listOfTokens;
     }
 
-    /*
-     * public static int getMinimumSimilarityThreshold(QueryBlock
-     * queryBlock,float threshold) { return (int) Math.ceil((threshold *
-     * queryBlock.getSize())/ (SearchManager.MUL_FACTOR*10)); } public static
-     * int getMinimumSimilarityThreshold(Bag bag,float threshold) { return (int)
-     * Math.ceil((threshold * bag.getSize())/ (SearchManager.MUL_FACTOR*10)); }
-     */
 
     public static void writeMapToFile(String filename, Map<String, Long> map) {
         // TODO Auto-generated method stub
@@ -476,15 +469,4 @@ public class Util {
         return listToReturn;
 
     }
-    /*
-     * public static int getPrefixSize(QueryBlock queryBlock, float threshold) {
-     * int prefixSize = (queryBlock.getSize() + 1) - computedThreshold;//
-     * this.computePrefixSize(maxLength); return prefixSize; }
-     */
-    /*
-     * public static int getPrefixSize(Bag bag, float threshold) { int
-     * computedThreshold = getMinimumSimilarityThreshold(bag, threshold); int
-     * prefixSize = (bag.getSize() + 1) - computedThreshold;//
-     * this.computePrefixSize(maxLength); return prefixSize; }
-     */
 }

@@ -16,7 +16,7 @@ import org.apache.lucene.search.Scorer;
  * @author vaibhavsaini
  * 
  */
-public class CustomCollector extends Collector {
+public class CustomCollector extends Collector {  // XXX unused code?
     private Map<Integer, Long> codeBlockIds;
     private int docBase;
     private IndexSearcher searcher;

@@ -15,7 +15,6 @@ public class QueryFileProcessor implements ITokensFileProcessor {
     @Override
     public void processLine(String line) {
         try {
-            //SearchManager.queryLineQueue.send(line);
         	QueryLineProcessor.processLine(line);
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage()

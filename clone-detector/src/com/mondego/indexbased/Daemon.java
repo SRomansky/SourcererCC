@@ -169,18 +169,6 @@ public class Daemon {
     	setState(State.INIT);
     	dataset_id = calculateDatasetId();
     	
-//    	//if (!(new File(Util.GTPM_INDEX_DIR).exists()) || Daemon.RESET_GTPM) {
-//    		// create gtpm index
-//    		WordFrequencyStore wfs = new WordFrequencyStore();
-//    		try {
-//    			wfs.populateLocalWordFreqMap();
-//    		} catch (IOException | ParseException e1) {
-//    			// TODO Auto-generated catch block
-//    			e1.printStackTrace();
-//    		}
-//    	//}
-//    	
-//    	SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
         File datasetDir = new File(SearchManager.DATASET_DIR);
         if (datasetDir.isDirectory()) {
             logger.info("Dataset directory: " + datasetDir.getAbsolutePath());
@@ -220,23 +208,6 @@ public class Daemon {
     	// TODO prevent multiple queries at the same time?
     	// start queue processors
     	setState(State.BUSY);
-    	
-    	/*
-    	// does anyone use the gtpm index dir?  // noindex.CloneHelper.getSortedQueryBlock // but it is commented out.
-    	// build gtpm index based on query contents
-    	//if (!(new File(Util.GTPM_INDEX_DIR).exists()) || Daemon.RESET_GTPM) {
-		// create gtpm index
-		WordFrequencyStore wfs = new WordFrequencyStore();
-		try {
-			wfs.populateLocalWordFreqMap();
-		} catch (IOException | ParseException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-	//}*/
-	
-	//SearchManager.gtpmSearcher = new CodeSearcher(Util.GTPM_INDEX_DIR, "key");  // when is this built/used?
-    	
     	
     	sm.completedQueries = new HashSet<Long>();
 
@@ -326,7 +297,6 @@ public class Daemon {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        //logInfo(req, tempFile);
 		try {
 			byte[] b = Files.readAllBytes(tempFile);
 	        byte[] hash = MessageDigest.getInstance("MD5").digest(b);
@@ -352,7 +322,6 @@ public class Daemon {
 	}
 	
 	public File getResults() {
-		//File resultsPath = new File(SearchManager.OUTPUT_DIR_TH);
 		File resultsPath = new File(outputDir);
 		return resultsPath;
 	}
@@ -368,12 +337,6 @@ public class Daemon {
 		loadCsvFileToMap(Paths.get(datasetCodeFilePath), datasetCodeMap);
 		
 		System.out.println("size of codemap: " + datasetCodeMap.size());
-		
-		// TODO use the report file at this point with another application to look up the code snippets?
-//        String qSrcDir = SearchManager.QUERY_SRC_DIR + "/src.zip";
-//        String dSrcDir = SearchManager.DATASET_SRC_DIR + "/src.zip"; // Could be any folder in here? No. Force it to be src.zip too.
-//        embedCode(report);
-//        
 		
 		String report = "";
 		
@@ -448,16 +411,9 @@ public class Daemon {
 											"<pre><code class=\"language-python\">" + // colspan states how many columns this entry may span.
 											  StringEscapeUtils.unescapeJava( datasetCodeMap.get("u'" + components[dpid])) +  // XXX This probably doesn't unescape the code properly. But, it is a start.
 											  "</code></pre>") + "</td>";
-//									wrap("<details>"+
-//									  "<summary>Show Code</summary>" +
-//											"<pre><code class=\"language-python\">" +
-//									  StringEscapeUtils.unescapeJava( datasetCodeMap.get("u'" + components[dpid])) +  // XXX This probably doesn't unescape the code properly. But, it is a start.
-//									  "</code></pre>" +
-//									  "</details>");
 									
 							String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
 							sb.append(row);
-//							report = report.concat(row);
 
 							line = bufferedReader.readLine();
 							lineno++;

@@ -29,12 +29,6 @@ public class CloneReporter implements IListener, Runnable {
     }
 
     private void reportClone(ClonePair cp) {
-        /*
-         * System.out.println("QBQ: "+ SearchManager.queryBlockQueue.size()+
-         * ", QCQ: "+ SearchManager.queryCandidatesQueue.size()+ ", VCQ: "+
-         * SearchManager.verifyCandidateQueue.size()+ ", RCQ: "+
-         * SearchManager.reportCloneQueue.size() );
-         */
         long startTime = System.nanoTime();
         SearchManager.updateClonePairsCount(1);
         Util.writeToFile(SearchManager.clonesWriter, cp.toString(), true);

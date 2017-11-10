@@ -260,52 +260,7 @@ public class CloneHelper {
     			}
     		}
     	
-//        Scanner scanner = new Scanner(inputString);
-//        scanner.useDelimiter(",");
-//        while (scanner.hasNext()) {
-//            String tokenFreq = scanner.next();
-//            String[] tokenAndFreq = tokenFreq.split("@@::@@");
-//            String tokenStr = this.strip(tokenAndFreq[0]).trim();
-//            if (tokenStr.length() > 0) {
-//                Token token = new Token(tokenStr);
-//                TokenFrequency tokenFrequency = new TokenFrequency();
-//                tokenFrequency.setToken(token);
-//                try {
-//                    tokenFrequency.setFrequency(Integer.parseInt(tokenAndFreq[1]));
-//                    bag.add(tokenFrequency);
-//                } catch (ArrayIndexOutOfBoundsException e) {
-//                    logger.error("EXCEPTION CAUGHT, token: " + token);
-//                    // System.out.println("EXCEPTION CAUGHT, tokenFreq: "+
-//                    // tokenAndFreq[1]);
-//                    logger.error("EXCEPTION CAUGHT: " + inputString);
-//                } catch (NumberFormatException e) {
-//                    logger.error("EXCEPTION CAUGHT: " + inputString + " " + e.getMessage());
-//                }
-//            }
-//        }
-//        scanner.close();
     }
-
-    /*
-     * public QueryBlock deserialiseToQueryBlock(String s, List<Entry<String,
-     * TokenInfo>> listOfTokens) throws ParseException { try { if (null != s &&
-     * s.trim().length() > 0) { String[] bagAndTokens = s.split("@#@"); String[]
-     * functionIdAndBagId = bagAndTokens[0].split(","); String functionId =
-     * functionIdAndBagId[0]; String bagId = functionIdAndBagId[1]; // int size
-     * = Integer.parseInt(functionIdAndBagId[2]); // QueryBlock queryBlock = new
-     * // QueryBlock(Long.parseLong((bagId))); //
-     * queryBlock.setFunctionId(Long.parseLong(functionId)); String tokenString
-     * = bagAndTokens[1]; int queryBlockSize = this.parseAndPopulateQueryBlock(
-     * listOfTokens, tokenString,",","@@::@@"); QueryBlock queryBlock = new
-     * QueryBlock(Long.parseLong((bagId)), queryBlockSize); try {
-     * queryBlock.setFunctionId(Long.parseLong(functionId)); } catch
-     * (NumberFormatException e) { throw e; } return queryBlock; } } catch
-     * (ArrayIndexOutOfBoundsException e) {
-     * System.out.println("EXCEPTION CAUGHT, string: " + s); } catch
-     * (NumberFormatException e) { System.out.println(e.getMessage() +
-     * ", ignoring query: " + s); } throw new ParseException("parsing error",
-     * 0); }
-     */
 
     public QueryBlock getSortedQueryBlock(String s, List<Entry<String, TokenInfo>> listOfTokens) throws ParseException {
         try {
@@ -325,8 +280,6 @@ public class CloneHelper {
                     queryBlock = new QueryBlock(Long.parseLong((bagId)), bagSize);
                     queryBlock.setFunctionId(Long.parseLong(functionId));
                     queryBlock.setNumUniqueTokens(numUniqueTokens);
-                    // logger.debug("setting metrics data for "+
-                    // s.substring(0,40));
 
                     for (int index = 0; index < Util.METRICS_ORDER_IN_INPUT_FILE.size(); index++) {
                         queryBlock.metrics.put(Util.METRICS_ORDER_IN_INPUT_FILE.get(index),
@@ -361,7 +314,6 @@ public class CloneHelper {
     		Entry[] entries = Arrays.stream(strippedLine.split(delimeterTokenFreq))
     			.map(f -> f.split(delimeterTokenAndFreq))
     			.map(pair -> {
-//    				String tokenString = this.strip(pair[0]).trim();
     				String tokenString = pair[0].trim();
     				
     				if (tokenString.length() == 0) return null;
@@ -376,41 +328,10 @@ public class CloneHelper {
     		
     		listOfTokens.addAll(new ArrayList(Arrays.asList(entries)));
     	
-        // int queryBlockSize = 0;
-//        Scanner scanner = new Scanner(inputString);
-//        scanner.useDelimiter(delimeterTokenFreq);
-//        String tokenFreq = null;
-//        String[] tokenAndFreq = null;
-//        String tokenStr = null;
-//        while (scanner.hasNext()) {
-//            tokenFreq = scanner.next();
-//            tokenAndFreq = tokenFreq.split(delimeterTokenAndFreq);
-//            tokenStr = this.strip(tokenAndFreq[0]).trim();
-//            if (tokenStr.length() > 0) {
-//                try {
-//                    TokenInfo tokenInfo = new TokenInfo(Integer.parseInt(tokenAndFreq[1]));
-//                    Entry<String, TokenInfo> entry = new AbstractMap.SimpleEntry<String, TokenInfo>(tokenStr,
-//                            tokenInfo);
-//                    listOfTokens.add(entry);
-//                    // queryBlockSize += tokenInfo.getFrequency();
-//
-//                } catch (ArrayIndexOutOfBoundsException e) {
-//                    logger.error("EXCEPTION CAUGHT, token: " + tokenStr + "," + e.getMessage());
-//                    // System.out.println("EXCEPTION CAUGHT, tokenFreq: "+
-//                    // tokenAndFreq[1]);
-//                    logger.error("EXCEPTION CAUGHT, inputString : " + inputString + "," + e.getMessage());
-//                } catch (NumberFormatException e) {
-//                    logger.error("EXCEPTION CAUGHT, inputString : " + inputString + "," + e.getMessage());
-//                }
-//            }
-//
-//        }
-//        scanner.close();
     }
 
     private String strip(String str) {
     		return this.strip.matcher(str).replaceAll("");
-//        return str.replaceAll("(\'|\"|\\\\)", "");
     }
 
     /**

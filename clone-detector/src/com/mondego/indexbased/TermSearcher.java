@@ -53,8 +53,6 @@ public class TermSearcher {
      *            the searchTerm to set
      */
     public void setSearchTerm(String searchTerm) {
-        // System.out.println(Util.debug_thread() + "setting searchTerm: "+
-        // searchTerm);
         this.searchTerm = searchTerm;
     }
 

@@ -60,7 +60,6 @@ public class TokensFileReader {
                     long estimatedTime = System.nanoTime() - startTime;
                     logger.debug(this.nodeId + " RL " + lineNumber + ", file " + prefix + " in " + estimatedTime / 1000
                             + " micros");
-//                    this.processor.processLine(prefix + line);
                     lines.add(prefix + line);
 
                 }
@@ -69,18 +68,13 @@ public class TokensFileReader {
             if (SearchManager.ACTION_SEARCH.equals(SearchManager.ACTION)
                     && SearchManager.LOG_PROCESSED_LINENUMBER_AFTER_X_LINES > 0
                     && lineNumber % SearchManager.LOG_PROCESSED_LINENUMBER_AFTER_X_LINES == 0) {
-                // Util.writeToFile(SearchManager.recoveryWriter, lineNumber +
-                // "",
-                // true);
             }
         }
         if (SearchManager.ACTION_SEARCH.equals(SearchManager.ACTION)) {
-            // Util.writeToFile(SearchManager.recoveryWriter, lineNumber + "",
-            // true);
         }
         br.close();
         
-        lines.stream().forEach(l -> {try {
+        lines.parallelStream().forEach(l -> {try {
 			this.processor.processLine(l);
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block

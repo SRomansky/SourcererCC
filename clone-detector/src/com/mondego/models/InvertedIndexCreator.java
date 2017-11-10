@@ -26,11 +26,6 @@ public class InvertedIndexCreator implements IListener, Runnable {
     @Override
     public void run() {
         try {
-            /*
-             * System.out.println(SearchManager.NODE_PREFIX +
-             * ", size of bagsToInvertedIndexQueue " +
-             * SearchManager.bagsToInvertedIndexQueue.size());
-             */
             this.index(this.bag);
         } catch (NoSuchElementException e) {
             e.printStackTrace();
