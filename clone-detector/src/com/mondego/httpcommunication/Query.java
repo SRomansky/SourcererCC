@@ -29,6 +29,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
@@ -71,7 +72,8 @@ public class Query {
 			@FormDataParam("header_file") InputStream headerInputStream,
 			@FormDataParam("license_file") InputStream licenseInputStream,
 			@FormDataParam("code_file") InputStream codeInputStream,
-			@FormDataParam("meta_data") FormDataBodyPart metaData
+			@FormDataParam("meta_data") FormDataBodyPart metaData,
+			@FormDataParam("batch_name") InputStream batchNameStream
 			) {
 		/**
 		 * run a query on the client using files from the POST message
@@ -107,6 +109,7 @@ public class Query {
 		System.out.println(shash);  // TODO log the hash? It could be useful for debugging?
 		System.out.println("Got query id: " + qid);
 		
+		SearchManager.batch_name = null;
 		try {
 			System.out.println("Header path: " + SearchManager.queryHeaderFilePath);
 			java.nio.file.Path queryHeaderPath = Paths.get(SearchManager.queryHeaderFilePath);
@@ -123,6 +126,13 @@ public class Query {
 			Files.deleteIfExists(queryCodePath);
 			Files.createFile(queryCodePath);  // TODO check if file attributes are needed...
 			Files.copy(codeInputStream, queryCodePath, StandardCopyOption.REPLACE_EXISTING);
+			
+			java.nio.file.Path batchNamePath = Paths.get("batch_name.txt");
+			Files.deleteIfExists(batchNamePath);
+			Files.createFile(batchNamePath);  // TODO check if file attributes are needed...
+			Files.copy(batchNameStream, batchNamePath, StandardCopyOption.REPLACE_EXISTING);
+			
+			SearchManager.batch_name = String.join(" ", Files.readAllLines(batchNamePath)); //IOUtils.toString(batchNameStream);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -298,6 +308,7 @@ public class Query {
 		formData.add("report", report);
 		formData.add("queryId", queryId);
 		formData.add("datasetShardId", datasetShardId);
+		formData.add("batch_name", SearchManager.batch_name);
 
 		FormDataContentDisposition cd = null;
 		try {

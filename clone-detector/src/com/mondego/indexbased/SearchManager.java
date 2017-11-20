@@ -127,6 +127,7 @@ public class SearchManager {
 	public static String queryLicenseFilePath = null;
 	public static String datasetHeaderFilePath = null;
 	public static String datasetLicenseFilePath = null;
+	public static String batch_name;
     
     public SearchManager(String[] args) throws IOException {
     	this.resetQueryCounters();

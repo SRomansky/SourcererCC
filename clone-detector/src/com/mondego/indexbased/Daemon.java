@@ -210,6 +210,8 @@ public class Daemon {
     	// start queue processors
     	setState(State.BUSY);
     	
+    	System.out.println("Got the query name: " + SearchManager.batch_name);
+    	
     	sm.completedQueries = new HashSet<Long>();
 
         sm.startQueryThreads();
