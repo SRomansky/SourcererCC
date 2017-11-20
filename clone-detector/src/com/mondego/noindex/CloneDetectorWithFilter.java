@@ -15,7 +15,6 @@ import java.util.Set;
 
 import com.mondego.models.Bag;
 import com.mondego.models.Token;
-import com.mondego.models.TokenFrequency;
 import com.mondego.utility.Util;
 
 /**

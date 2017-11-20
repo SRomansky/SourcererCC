@@ -25,7 +25,6 @@ import org.apache.lucene.util.Version;
 import com.mondego.models.Bag;
 import com.mondego.models.ITokensFileProcessor;
 import com.mondego.models.Token;
-import com.mondego.models.TokenFrequency;
 import com.mondego.noindex.CloneHelper;
 import com.mondego.utility.TokensFileReader;
 import com.mondego.utility.Util;
