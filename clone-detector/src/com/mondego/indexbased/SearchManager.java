@@ -76,15 +76,8 @@ public class SearchManager {
     private static final String ACTION_INIT = "init";
     int deletemeCounter = 0;
     public static double ramBufferSizeMB;
-    public static ThreadedChannel<String> queryLineQueue;
-    public static ThreadedChannel<QueryBlock> queryBlockQueue;
-    public static ThreadedChannel<QueryCandidates> queryCandidatesQueue;
-    public static ThreadedChannel<CandidatePair> verifyCandidateQueue;
     public static ThreadedChannel<ClonePair> reportCloneQueue;
 
-    public static ThreadedChannel<Bag> bagsToSortQueue;
-    public static ThreadedChannel<Bag> bagsToInvertedIndexQueue;
-    public static ThreadedChannel<Bag> bagsToForwardIndexQueue;
     public static SearchManager theInstance;
     public static List<IndexWriter> indexerWriters;
     private static EProperties properties = new EProperties();
@@ -97,14 +90,7 @@ public class SearchManager {
     }
     
     public static Object lock = new Object();
-    private int qlq_thread_count;
-    private int qbq_thread_count;
-    private int qcq_thread_count;
-    private int vcq_thread_count;
     private int rcq_thread_count;
-    private int threadsToProcessBagsToSortQueue;
-    private int threadToProcessIIQueue;
-    private int threadsToProcessFIQueue;
     public static int min_tokens;
     public static int max_tokens;
     public static boolean isGenCandidateStats;
@@ -152,16 +138,9 @@ public class SearchManager {
 
             SearchManager.th = (Float.parseFloat(args[1]) * SearchManager.MUL_FACTOR);
 
-            this.qlq_thread_count = Integer.parseInt(properties.getProperty("QLQ_THREADS", "1"));
-            this.qbq_thread_count = Integer.parseInt(properties.getProperty("QBQ_THREADS", "1"));
-            this.qcq_thread_count = Integer.parseInt(properties.getProperty("QCQ_THREADS", "1"));
-            this.vcq_thread_count = Integer.parseInt(properties.getProperty("VCQ_THREADS", "1"));
             this.rcq_thread_count = Integer.parseInt(properties.getProperty("RCQ_THREADS", "1"));
             SearchManager.min_tokens = Integer.parseInt(properties.getProperty("LEVEL_1_MIN_TOKENS", "65"));
             SearchManager.max_tokens = Integer.parseInt(properties.getProperty("LEVEL_1_MAX_TOKENS", "500000"));
-            this.threadsToProcessBagsToSortQueue = Integer.parseInt(properties.getProperty("BTSQ_THREADS", "1"));
-            this.threadToProcessIIQueue = Integer.parseInt(properties.getProperty("BTIIQ_THREADS", "1"));
-            this.threadsToProcessFIQueue = Integer.parseInt(properties.getProperty("BTFIQ_THREADS", "1"));
             
         } catch (NumberFormatException e) {
             logger.error(e.getMessage() + ", exiting now", e);
@@ -305,32 +284,11 @@ public class SearchManager {
 
     public void startQueryThreads() {
         logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
-                + System.lineSeparator() + " QLQ_THREADS: " + this.qlq_thread_count + " QBQ_THREADS: "
-                + this.qbq_thread_count + " QCQ_THREADS: " + this.qcq_thread_count + " VCQ_THREADS: "
-                + this.vcq_thread_count + " RCQ_THREADS: " + this.rcq_thread_count + System.lineSeparator());
-        SearchManager.queryLineQueue = new ThreadedChannel<String>(this.qlq_thread_count, QueryLineProcessor.class);
-        SearchManager.queryBlockQueue = new ThreadedChannel<QueryBlock>(this.qbq_thread_count,
-                CandidateSearcher.class);
-        SearchManager.queryCandidatesQueue = new ThreadedChannel<QueryCandidates>(this.qcq_thread_count,
-                CandidateProcessor.class);
-        SearchManager.verifyCandidateQueue = new ThreadedChannel<CandidatePair>(this.vcq_thread_count,
-                CloneValidator.class);
+                + System.lineSeparator() + " RCQ_THREADS: " + this.rcq_thread_count + System.lineSeparator());
         SearchManager.reportCloneQueue = new ThreadedChannel<ClonePair>(this.rcq_thread_count, CloneReporter.class);
-        logger.info("action: " + SearchManager.ACTION + System.lineSeparator() + "threshold: " + SearchManager.th
-                + System.lineSeparator() + " BQ_THREADS: " + this.threadsToProcessBagsToSortQueue
-                + System.lineSeparator() + " SBQ_THREADS: " + this.threadToProcessIIQueue + System.lineSeparator()
-                + " IIQ_THREADS: " + this.threadsToProcessFIQueue + System.lineSeparator());
     }
     
     public void stopQueryThreads() {
-    	SearchManager.queryLineQueue.shutdown();
-        logger.info("shutting down QLQ, " + System.currentTimeMillis());
-        logger.info("shutting down QBQ, " + (System.currentTimeMillis()));
-        SearchManager.queryBlockQueue.shutdown();
-        logger.info("shutting down QCQ, " + System.currentTimeMillis());
-        SearchManager.queryCandidatesQueue.shutdown();
-        logger.info("shutting down VCQ, " + System.currentTimeMillis());
-        SearchManager.verifyCandidateQueue.shutdown();
         logger.info("shutting down RCQ, " + System.currentTimeMillis());
         SearchManager.reportCloneQueue.shutdown();
     }
@@ -355,8 +313,6 @@ public class SearchManager {
         
         ArrayList<String> lines = new ArrayList<String>();
         
-        SearchManager.bagsToInvertedIndexQueue = new ThreadedChannel<Bag>(this.threadToProcessIIQueue,
-                InvertedIndexCreator.class);
         System.out.println("*** Indexing dataset file: " + candidateFile.toString());
         try {
 			while ((line = br.readLine()) != null && line.trim().length() > 0) {
@@ -404,7 +360,6 @@ public class SearchManager {
 				}
         });
         
-        SearchManager.bagsToInvertedIndexQueue.shutdown();
         return -1;
     }
 
