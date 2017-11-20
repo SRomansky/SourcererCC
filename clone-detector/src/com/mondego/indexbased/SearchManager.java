@@ -134,8 +134,8 @@ public class SearchManager {
 	public static String OUTPUT_DIR_TH;
     public JerseyServer server;
     public int daemonPort = 4568;
-	public String managerURL = "localhost";
-	public int managerPort = 4567;
+	public static String managerURL = "localhost";
+	public static int managerPort = 4567;
 	
 	public static String queryHeaderFilePath = null;
 	public static String queryLicenseFilePath = null;
@@ -228,6 +228,8 @@ public class SearchManager {
             SearchManager.queryHeaderFilePath = properties.getProperty("QUERY_HEADER_FILE_PATH");
             SearchManager.queryLicenseFilePath = properties.getProperty("QUERY_LICENSE_FILE_PATH");
 
+            SearchManager.managerURL = properties.getProperty("MANAGER_IP");
+            SearchManager.managerPort = Integer.parseInt(properties.getProperty("MANAGER_PORT"));
             
             String shardsOrder = properties.getProperty("METRICS_ORDER_IN_SHARDS");
             SearchManager.METRICS_ORDER_IN_SHARDS = new ArrayList<String>();
@@ -276,10 +278,7 @@ public class SearchManager {
 
         Util.createDirs(SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR);
         if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
-        		//String ip = InetAddress.getLocalHost().getHostAddress();  // TODO this might be the wrong ip // It is wrong :(
-        		String ip = "127.0.0.1";
-
-        		SearchManager.daemon = new Daemon(theInstance, ip, theInstance.daemonPort); // builds global daemon.
+        		SearchManager.daemon = new Daemon(theInstance, theInstance.daemonPort); // builds global daemon.
 
         		// XXX Jersey stuff
         		// Base URI the Grizzly HTTP server will listen on

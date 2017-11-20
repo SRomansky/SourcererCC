@@ -122,9 +122,7 @@ public class DaemonTest {
         
         Util.createDirs(SearchManager.OUTPUT_DIR + SearchManager.th / SearchManager.MUL_FACTOR);
 
-		String ip = "127.0.0.1";  // TODO figure out how to specify this on command line
-
-		theInstance.daemon = new Daemon(theInstance, ip, theInstance.daemonPort); // builds global daemon.
+		theInstance.daemon = new Daemon(theInstance, theInstance.daemonPort); // builds global daemon.
 
 		theInstance.theInstance = theInstance;
 		
@@ -507,7 +505,7 @@ public class DaemonTest {
 	}
 	
 	
-    @Test
+//    @Test
 	public void testBenchmark() {
 		// This test requires the benchmark_sets.zip file. It is not included in the github repository.
 		// The zip file should be extracted in src/test/ to make src/test/benchmark_sets

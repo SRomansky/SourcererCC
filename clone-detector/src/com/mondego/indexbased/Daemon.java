@@ -79,6 +79,8 @@ public class Daemon {
 	}
 	
 	private static State state = State.INIT; // TODO do semaphores need to be used to access and modify the state?
+	public static String managerIP = "localhost";
+	public static int managerPort = 4567;
 	
 	private void setState(State newState) {
 		state = newState;
@@ -96,9 +98,8 @@ public class Daemon {
 		return daemon;
 	}
 	
-	public Daemon(SearchManager theInstance, String daemonIp, int daemonPort) {
+	public Daemon(SearchManager theInstance, int daemonPort) {
 		sm = theInstance;
-		ip = daemonIp;
 		port = daemonPort;
 		daemon = this;
 	}

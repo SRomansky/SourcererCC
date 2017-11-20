@@ -27,9 +27,9 @@ public class Register {
     public static String sendRegistration() {
     	// TODO if the registration message was not successful, retry
     	Client client = ClientBuilder.newClient();
-    	WebTarget webTarget = client.target("http://localhost:4567/register"); // TODO dynamic URI
+    	String managerURI = "http://" + Daemon.getInstance().managerIP + ":" + Daemon.getInstance().managerPort;
+    	WebTarget webTarget = client.target(managerURI + "/register");
     	MultivaluedMap formData = new MultivaluedStringMap();
-    	formData.add("ip", "" + Daemon.getInstance().ip);
     	formData.add("port", "" + Daemon.getInstance().port);
     	Response response = webTarget
     			.request()
