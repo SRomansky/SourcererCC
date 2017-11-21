@@ -5,12 +5,13 @@ import javax.ws.rs.Path;
 
 import com.mondego.indexbased.Daemon;
 
-@Path("/status")
-public class Status {
+@Path("/batch")
+public class BatchName {
+
 	@GET
-	public String getStatus() {
+	public String getBatchName() {
 		Daemon daemon = Daemon.getInstance();
 
-		return daemon.getState().toString(); // TODO what does the enum look like as a String?
+		return daemon.sm.batch_name;
 	}
 }
