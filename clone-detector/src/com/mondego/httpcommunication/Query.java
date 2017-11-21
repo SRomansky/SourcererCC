@@ -12,6 +12,8 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -48,6 +50,8 @@ import com.mondego.indexbased.SearchManager;
 
 @Path("/query")
 public class Query {
+	private static final ExecutorService TASK_EXECUTOR = Executors.newCachedThreadPool();
+
 	private static final Logger logger = LogManager.getLogger(Query.class);
 	
 	private String getFileHash(java.nio.file.Path filePath) throws IOException, NoSuchAlgorithmException {
@@ -82,6 +86,10 @@ public class Query {
 		 * side-effect: puts new files into daemon.sm.QUERY_DIR_PATH
 		 */
 
+		// TODO check if the client is in the IDLE state
+		TASK_EXECUTOR.submit(new Runnable() {
+            @Override
+            public void run() {
 		MultivaluedMap metaDataMap = metaData.getValueAs(MultivaluedMap.class);
 		String qid = (String) ((java.util.LinkedList) metaDataMap.get("qid")).get(0);  // why
 
@@ -183,8 +191,8 @@ public class Query {
         
         
         sendResults(report, qid, daemon.dataset_id);
-		
-		return "Query completed.";
+            }});
+		return "Query running.";
 	}
 	
 	
