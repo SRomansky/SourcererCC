@@ -260,6 +260,9 @@ public class SearchManager {
         if (SearchManager.ACTION.equalsIgnoreCase(ACTION_DAEMON)) {
         		SearchManager.daemon = new Daemon(theInstance, theInstance.daemonPort); // builds global daemon.
 
+        		Daemon.managerIP = SearchManager.managerURL;
+        		Daemon.managerPort = SearchManager.managerPort;
+        		
         		// XXX Jersey stuff
         		// Base URI the Grizzly HTTP server will listen on
         		theInstance.server = new JerseyServer("localhost", theInstance.daemonPort); // TODO default config
