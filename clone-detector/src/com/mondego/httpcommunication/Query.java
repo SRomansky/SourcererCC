@@ -93,10 +93,6 @@ public class Query {
         }
 		
 		// TODO check if the client is in the IDLE state
-		Daemon.executor.submit(new Runnable() {
-            @Override
-            public void run() {
-            	try {
 		MultivaluedMap metaDataMap = metaData.getValueAs(MultivaluedMap.class);
 		String qid = (String) ((java.util.LinkedList) metaDataMap.get("qid")).get(0);  // why
 
@@ -154,6 +150,7 @@ public class Query {
 		}
 		/* unpack contents from manager into query directory */
 		
+		
 		// TODO check if the daemon is busy in a query
 		// TODO if the daemon is busy there is a bug :)
 		// TODO (later) if the daemon is busy, send a POST with an error to results/{id} on the manager
@@ -172,6 +169,9 @@ public class Query {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		TASK_EXECUTOR.submit(new Runnable() {
+            @Override
+            public void run() {
 		
 		/* run the query */
 		// TODO check if daemon status is loaded
