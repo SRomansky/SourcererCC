@@ -169,9 +169,9 @@ public class Query {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		TASK_EXECUTOR.submit(new Runnable() {
-            @Override
-            public void run() {
+//		TASK_EXECUTOR.submit(new Runnable() {
+//            @Override
+//            public void run() {
 		
 		/* run the query */
 		// TODO check if daemon status is loaded
@@ -198,10 +198,10 @@ public class Query {
         
         
         sendResults(report, qid, daemon.dataset_id);
-            } finally {
+//            } finally {
             		Daemon.semaphore.release();
-            }
-            }});
+//            }
+//            }});
 		
 		
 		return "Query running.";
