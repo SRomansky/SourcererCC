@@ -86,10 +86,17 @@ public class Query {
 		 * side-effect: puts new files into daemon.sm.QUERY_DIR_PATH
 		 */
 
+		try {
+            Daemon.semaphore.acquire();
+        } catch (InterruptedException ex) {
+            logger.error("Caught interrupted exception " + ex);
+        }
+		
 		// TODO check if the client is in the IDLE state
-		TASK_EXECUTOR.submit(new Runnable() {
+		Daemon.executor.submit(new Runnable() {
             @Override
             public void run() {
+            	try {
 		MultivaluedMap metaDataMap = metaData.getValueAs(MultivaluedMap.class);
 		String qid = (String) ((java.util.LinkedList) metaDataMap.get("qid")).get(0);  // why
 
@@ -191,7 +198,12 @@ public class Query {
         
         
         sendResults(report, qid, daemon.dataset_id);
+            } finally {
+            		Daemon.semaphore.release();
+            }
             }});
+		
+		
 		return "Query running.";
 	}
 	
@@ -310,7 +322,7 @@ public class Query {
 		clientConfig.register(MultiPartFeature.class); 
 		
 		Client client = ClientBuilder.newClient(clientConfig);
-		WebTarget webTarget = client.target("http://localhost:4567/results");  // TODO dynamic
+		WebTarget webTarget = client.target("http://" + Daemon.managerIP + ":" + Daemon.managerPort + "/results");  // TODO dynamic
 
 		MultivaluedMap formData = new MultivaluedStringMap();
 		formData.add("report", report);

@@ -262,7 +262,7 @@ public class SearchManager {
 
         		// XXX Jersey stuff
         		// Base URI the Grizzly HTTP server will listen on
-        		theInstance.server = new JerseyServer("localhost", theInstance.daemonPort); // TODO default config
+        		theInstance.server = new JerseyServer("0.0.0.0", theInstance.daemonPort); // TODO default config
         		theInstance.server.run();
         		
         		// XXX Jersey stuff

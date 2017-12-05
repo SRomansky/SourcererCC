@@ -28,6 +28,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -67,6 +70,8 @@ public class Daemon {
 	HashMap<String, String> datasetLicenseMap = new HashMap<String, String>();
 	HashMap<String, String> datasetCodeMap = new HashMap<String, String>();
 	public HttpServer server;
+	public static ExecutorService executor;
+	public static Semaphore semaphore;
 
 	
 	public enum State {
@@ -102,6 +107,8 @@ public class Daemon {
 		sm = theInstance;
 		port = daemonPort;
 		daemon = this;
+		this.executor = Executors.newFixedThreadPool(1);
+        this.semaphore = new Semaphore(1);
 	}
 	
 	private String calculateDatasetId() {
