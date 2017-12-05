@@ -469,7 +469,7 @@ public class Daemon {
 		try (BufferedReader br = Files.newBufferedReader(csvFile, StandardCharsets.UTF_8)) {
 			String line = br.readLine();
 			while (line != null) {
-				String prefixRemoved = line.replaceFirst("u'", "");
+				String prefixRemoved = line.replaceFirst("u('|\")", "");
 				String suffixRemoved = prefixRemoved.substring(0, prefixRemoved.length()-3); // remove "\n'"
 				
 				String[] parts = suffixRemoved.split(",", 2);
