@@ -470,7 +470,7 @@ public class Daemon {
 			String line = br.readLine();
 			while (line != null) {
 				String prefixRemoved = line.replaceFirst("u'", "");
-				String suffixRemoved = prefixRemoved.replaceAll("\n'$", "");
+				String suffixRemoved = prefixRemoved.substring(0, prefixRemoved.length()-3); // remove "\n'"
 				
 				String[] parts = suffixRemoved.split(",", 2);
 
