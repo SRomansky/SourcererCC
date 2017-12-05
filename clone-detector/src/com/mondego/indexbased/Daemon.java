@@ -40,6 +40,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -407,6 +408,11 @@ public class Daemon {
 							int dbid = 3;
 
 							
+							String queryCode = StringEscapeUtils.unescapeJava( queryCodeMap.get("u'" + components[qpid]));
+							String escapedQueryCode = StringUtils.replaceEach(queryCode, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"});
+							
+							String dataCode = StringEscapeUtils.unescapeJava( datasetCodeMap.get("u'" + components[dpid]));
+							String escapedDataCode = StringUtils.replaceEach(dataCode, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"});
 							
 							
 							String rowContent = wrap(components[dpid]) + wrap(components[dbid]) + wrap(components[qpid]) + wrap(components[qbid]) +
@@ -416,10 +422,10 @@ public class Daemon {
 									wrap(queryLicenseMap.get(components[qpid])) + "</tr><tr>" +
 									"<td colspan=8>" + makeCodeBlock("" + lineno, 
 											"<pre><code class=\"language-python\">" + // colspan states how many columns this entry may span.
-													  StringEscapeUtils.unescapeJava( queryCodeMap.get("u'" + components[qpid])) +  // XXX This probably doesn't unescape the code properly. But, it is a start.
+													escapedQueryCode +  // XXX This probably doesn't unescape the code properly. But, it is a start.
 													  "</code></pre>", 
 											"<pre><code class=\"language-python\">" + // colspan states how many columns this entry may span.
-											  StringEscapeUtils.unescapeJava( datasetCodeMap.get("u'" + components[dpid])) +  // XXX This probably doesn't unescape the code properly. But, it is a start.
+													escapedDataCode +  // XXX This probably doesn't unescape the code properly. But, it is a start.
 											  "</code></pre>") + "</td>";
 									
 							String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
