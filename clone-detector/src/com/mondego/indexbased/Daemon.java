@@ -342,10 +342,10 @@ public class Daemon {
 			String datasetLicenseFilePath, String datasetCodeFilePath) {
 		loadCsvFileToMap(Paths.get(queryHeaderFilePath), queryHeaderMap); // XXX Assert that the hashes have the same length. (They can have different lengths if not all of the parser files were copied to the client.)
 		loadCsvFileToMap(Paths.get(queryLicenseFilePath), queryLicenseMap);
-		loadCsvFileToMap(Paths.get(queryCodeFilePath), queryCodeMap);
+		loadCodeCsvFileToMap(Paths.get(queryCodeFilePath), queryCodeMap);
 		loadCsvFileToMap(Paths.get(datasetHeaderFilePath), datasetHeaderMap);
 		loadCsvFileToMap(Paths.get(datasetLicenseFilePath), datasetLicenseMap);
-		loadCsvFileToMap(Paths.get(datasetCodeFilePath), datasetCodeMap);
+		loadCodeCsvFileToMap(Paths.get(datasetCodeFilePath), datasetCodeMap);
 		
 		System.out.println("size of codemap: " + datasetCodeMap.size());
 		
@@ -408,10 +408,10 @@ public class Daemon {
 							int dbid = 3;
 
 							
-							String queryCode = StringEscapeUtils.unescapeJava( queryCodeMap.get("u'" + components[qpid]));
+							String queryCode = StringEscapeUtils.unescapeJava( queryCodeMap.get(components[qpid]));
 							String escapedQueryCode = StringUtils.replaceEach(queryCode, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"});
 							
-							String dataCode = StringEscapeUtils.unescapeJava( datasetCodeMap.get("u'" + components[dpid]));
+							String dataCode = StringEscapeUtils.unescapeJava( datasetCodeMap.get(components[dpid]));
 							String escapedDataCode = StringUtils.replaceEach(dataCode, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"});
 							
 							
@@ -449,6 +449,37 @@ public class Daemon {
 		}
 		
 		return report;
+	}
+	
+	public void loadCodeCsvFileToMap(Path csvFile, HashMap<String, String> map) {
+		/**
+		 * This function is used to load the header and license file into maps.
+		 * 
+		 * The header file has a structure like this:
+		 * cloneId,path,startLineNo,endLineNo
+		 * 1,../../data_set/100_modules/0-core-client-1.1.0a5.tar.gz/0-core-client-1.1.0a5/zeroos/core0/client/__init__.py,1,1
+		 * 
+		 * The license file has a structure like this:
+		 * cloneId,license(s)
+		 * 1,NONE
+		 */
+		
+		map.clear();
+		// based on: http://www.java67.com/2015/08/how-to-load-data-from-csv-file-in-java.html
+		try (BufferedReader br = Files.newBufferedReader(csvFile, StandardCharsets.UTF_8)) {
+			String line = br.readLine();
+			while (line != null) {
+				String prefixRemoved = line.replaceFirst("u'", "");
+				String suffixRemoved = prefixRemoved.replaceAll("\n'$", "");
+				
+				String[] parts = suffixRemoved.split(",", 2);
+
+				map.put(parts[0], parts[1]);
+				line = br.readLine();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void loadCsvFileToMap(Path csvFile, HashMap<String, String> map) {
