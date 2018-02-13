@@ -416,7 +416,6 @@ public class Daemon {
 							String dataCode = StringEscapeUtils.unescapeJava( datasetCodeMap.get(components[dpid]));
 							String escapedDataCode = StringUtils.replaceEach(dataCode, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"});
 							
-							
 							String rowContent = wrap(components[dpid]) + wrap(components[dbid]) + wrap(components[qpid]) + wrap(components[qbid]) +
 									wrap(datasetHeaderMap.get(components[dpid])) +
 									wrap(datasetLicenseMap.get(components[dpid])) +
@@ -527,6 +526,13 @@ public class Daemon {
 			String dataset_id
 			) 
 	{
+		loadCsvFileToMap(Paths.get(queryHeaderFilePath), queryHeaderMap); // XXX Assert that the hashes have the same length. (They can have different lengths if not all of the parser files were copied to the client.)
+		loadCsvFileToMap(Paths.get(queryLicenseFilePath), queryLicenseMap);
+		loadCodeCsvFileToMap(Paths.get(queryCodeFilePath), queryCodeMap);
+		loadCsvFileToMap(Paths.get(datasetHeaderFilePath), datasetHeaderMap);
+		loadCsvFileToMap(Paths.get(datasetLicenseFilePath), datasetLicenseMap);
+		loadCodeCsvFileToMap(Paths.get(datasetCodeFilePath), datasetCodeMap);
+		System.out.println("size of codemap: " + datasetCodeMap.size());
 		ArrayList<String> pageList = new ArrayList<String>();
 		
 		try {
@@ -559,7 +565,7 @@ public class Daemon {
 							String dataCode = StringEscapeUtils.unescapeJava( datasetCodeMap.get(components[dpid]));
 							String escapedDataCode = StringUtils.replaceEach(dataCode, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"});
 							
-							
+//							logger.error("Size of datasetHEader: " + String.valueOf(datasetHeaderMap.size()));
 							String rowContent = wrap(components[dpid]) + wrap(components[dbid]) + wrap(components[qpid]) + wrap(components[qbid]) +
 									wrap(datasetHeaderMap.get(components[dpid])) +
 									wrap(datasetLicenseMap.get(components[dpid])) +
@@ -580,7 +586,7 @@ public class Daemon {
 								page = page.concat(sb.toString());
 								page = page.concat(getNextAndPrev(pageList.size(), query_id, dataset_id));
 								pageList.add(page);
-								logger.error(page);
+//								logger.error(page);
 								page = new String(getPageCssAndJs());
 								sb = new StringBuilder();
 							}
