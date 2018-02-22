@@ -254,6 +254,54 @@ public class DaemonTest {
         
 	}
 	
+//	@Test
+	public void test5QueriesBenchmark() {
+		// Assume that clone-detector/src/test/input contains valid .license, .header, .code, and dataset/*.token files.
+		// Copies the input folder contents to the query folder.
+		// Runs a query of 10 modules against the same 10 modules.
+
+		// expected result: no crashes
+		// expected result: a generated report
+
+		// general setup
+		String sourcererCCPath = System.getProperty("user.dir"); // <path>/SourcererCC/clone-detector
+		// update the path to the test dataset
+		String testDataPath = sourcererCCPath + "/src/test/benchmark_sets/";
+		SearchManager instance = createDaemon();
+		// end general setup
+
+		String x = "5000m"; // x = {10m, 100m, 1000m}
+		// x on x
+		// setup dataset directories
+		setSearchManagerProperties(testDataPath, x, x);
+		copy10Modules(testDataPath);
+		
+		SearchManager.min_tokens = 22;
+		// The daemon uses global variables from SearchManager to locate the queryset.
+//		SearchManager.queryHeaderFilePath  // overwritten by a POST message
+//		SearchManager.queryLicenseFilePath  // overwritten by a POST message
+//		sm.QUERY_DIR_PATH // Warning, this directory is cleaned before usage. Do not set it to test/input
+//		SearchManager.QUERY_SRC_DIR  // XXX This isn't implemented yet.
+		
+//		try {
+//			FileUtils.copyDirectory(new File(SearchManager.DATASET_DIR), new File(SearchManager.QUERY_DIR_PATH)); // input/dataset/*token
+//			FileUtils.copyFile(new File(SearchManager.DATASET_SRC_DIR), new File(SearchManager.QUERY_SRC_DIR));  // test.code
+//			FileUtils.copyFile(new File(SearchManager.datasetHeaderFilePath), new File(SearchManager.queryHeaderFilePath)); // test.header
+//			FileUtils.copyFile(new File(SearchManager.datasetLicenseFilePath), new File(SearchManager.queryLicenseFilePath)); // test.license
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//			fail("Error copying test files.");
+//		}
+		
+		instance.daemon.start();
+		instance.daemon.query(); // This shouldn't throw any exceptions.
+		instance.daemon.query();
+		instance.daemon.query();
+		instance.daemon.query();
+		instance.daemon.query();
+	}
+	
 	/**
 	 * Check that the client can run clone detection comparing the queryset to the dataset.
 	 * Check that the report is generated properly by the client.
@@ -505,7 +553,7 @@ public class DaemonTest {
 	}
 	
 	
-//    @Test
+    @Test
 	public void testBenchmark() {
 		// This test requires the benchmark_sets.zip file. It is not included in the github repository.
 		// The zip file should be extracted in src/test/ to make src/test/benchmark_sets
@@ -550,6 +598,10 @@ public class DaemonTest {
 		setStartTime();
 		instance.daemon.query();
 		logTime("Total 10m v 5000m query run time");
+		
+		// just give the 10 project query times for now
+		if (true)
+			return;
 		
 		// setup 100m dataset directories
 		setSearchManagerProperties(testDataPath, "100m", "100m");

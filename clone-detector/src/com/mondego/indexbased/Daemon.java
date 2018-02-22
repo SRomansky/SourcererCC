@@ -21,6 +21,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -74,6 +75,7 @@ public class Daemon {
 	public static ExecutorService executor;
 	public static Semaphore semaphore;
 
+	public static int PAGE_LENGTH = 50; // number of clones per report page
 	
 	public enum State {
 		/**
@@ -414,7 +416,6 @@ public class Daemon {
 							String dataCode = StringEscapeUtils.unescapeJava( datasetCodeMap.get(components[dpid]));
 							String escapedDataCode = StringUtils.replaceEach(dataCode, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"});
 							
-							
 							String rowContent = wrap(components[dpid]) + wrap(components[dbid]) + wrap(components[qpid]) + wrap(components[qbid]) +
 									wrap(datasetHeaderMap.get(components[dpid])) +
 									wrap(datasetLicenseMap.get(components[dpid])) +
@@ -451,6 +452,171 @@ public class Daemon {
 		return report;
 	}
 	
+	private String getPageCssAndJs() {
+		String header = "";
+		
+		String css = "<style>\n" + 
+		"  div#expand{\n" + 
+		"  display:block;\n" + 
+		"  }\n" + 
+		"\n" + 
+		"  .wrapper {\n" + 
+		"  width: 100%;\n" + 
+		"  border: 1px solid black;\n" + 
+		"  overflow: hidden;\n" + 
+		"  }\n" + 
+		"\n" + 
+		"  .first {\n" + 
+		"  border: 1px solid grey;\n" + 
+		"  width: 49%;\n" + 
+		"  float: left;\n" + 
+		"  }\n" + 
+		"  .second {\n" + 
+		"  border: 1px solid grey;\n" + 
+		"  width: 49%;\n" + 
+		"  float: right;\n" + 
+		"  }\n" + 
+		"  .next {\n" +
+		"    position: absolute;\n" +
+		"    right: 6px;\n" +
+		"  }\n" +
+		"  .previous {\n" +
+		"    position: absolute;\n" +
+		"    left: 6px;\n" +
+		"  }\n" +	
+		"</style>\n";
+		
+		String js = "<script>\n" + 
+		"  function show(id)\n" + 
+		"  {\n" + 
+		"  if(document.getElementById(id).style.display == 'none')\n" + 
+		"  document.getElementById(id).style.display = 'block';\n" + 
+		"  else\n" + 
+		"  document.getElementById(id).style.display = 'none';\n" + 
+		"  }\n" + 
+		"</script>\n";
+		
+		header += css + js;
+		return header;
+	}
+	
+	private String getNextAndPrev(int pageCount, String queryId, String datasetId) {
+		int previousPage = 0;
+		if (pageCount > 0)
+				previousPage = pageCount - 1;
+		int nextPage = pageCount + 1;
+		// {qid}/{dsid}/{pageno} // TODO how does href work? Can it be used relatively.
+		
+		String prevPageRef = /*queryId + "/" + datasetId + "/" +*/ String.valueOf(previousPage);
+		String nextPageRef = /*queryId + "/" + datasetId + "/" +*/ String.valueOf(nextPage);
+		
+		String previous = "<a href=\"" + prevPageRef + "\" class=\"previous\">&laquo; Previous</a>"; 
+		String next = "<a href=\""+ nextPageRef + "\" class=\"next\">Next &raquo;</a>";
+		return previous + next;
+	}
+	
+	public ArrayList<String> generateReportPages(
+			String queryHeaderFilePath, 
+			String queryLicenseFilePath, 
+			String queryCodeFilePath,
+			String datasetHeaderFilePath,
+			String datasetLicenseFilePath, 
+			String datasetCodeFilePath,
+			String query_id,
+			String dataset_id
+			) 
+	{
+		loadCsvFileToMap(Paths.get(queryHeaderFilePath), queryHeaderMap); // XXX Assert that the hashes have the same length. (They can have different lengths if not all of the parser files were copied to the client.)
+		loadCsvFileToMap(Paths.get(queryLicenseFilePath), queryLicenseMap);
+		loadCodeCsvFileToMap(Paths.get(queryCodeFilePath), queryCodeMap);
+		loadCsvFileToMap(Paths.get(datasetHeaderFilePath), datasetHeaderMap);
+		loadCsvFileToMap(Paths.get(datasetLicenseFilePath), datasetLicenseMap);
+		loadCodeCsvFileToMap(Paths.get(datasetCodeFilePath), datasetCodeMap);
+		System.out.println("size of codemap: " + datasetCodeMap.size());
+		ArrayList<String> pageList = new ArrayList<String>();
+		
+		try {
+			File dir = new File(outputDir);
+			File[] directoryListing = dir.listFiles();
+			int lineno = 0;
+			StringBuilder sb = new StringBuilder();
+			String page = new String(getPageCssAndJs());
+			if (directoryListing != null) {
+				for (File file : directoryListing) {
+					if (file.isFile()) {
+						// read the file
+						BufferedReader bufferedReader;
+
+						bufferedReader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8);
+
+						
+						String line = bufferedReader.readLine();
+						while(line != null){
+							String[] components = line.split(",");
+							int qpid = 0;
+							int qbid = 1;
+							int dpid = 2;
+							int dbid = 3;
+
+							
+							String queryCode = StringEscapeUtils.unescapeJava( queryCodeMap.get(components[qpid]));
+							String escapedQueryCode = StringUtils.replaceEach(queryCode, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"});
+							
+							String dataCode = StringEscapeUtils.unescapeJava( datasetCodeMap.get(components[dpid]));
+							String escapedDataCode = StringUtils.replaceEach(dataCode, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"});
+							
+//							logger.error("Size of datasetHEader: " + String.valueOf(datasetHeaderMap.size()));
+							String rowContent = wrap(components[dpid]) + wrap(components[dbid]) + wrap(components[qpid]) + wrap(components[qbid]) +
+									wrap(datasetHeaderMap.get(components[dpid])) +
+									wrap(datasetLicenseMap.get(components[dpid])) +
+									wrap(queryHeaderMap.get(components[qpid])) +
+									wrap(queryLicenseMap.get(components[qpid])) + "</tr><tr>" +
+									"<td colspan=8>" + makeCodeBlock("" + lineno, 
+											"<pre><code class=\"language-python\">" + // colspan states how many columns this entry may span.
+													escapedQueryCode +  // XXX This probably doesn't unescape the code properly. But, it is a start.
+													  "</code></pre>", 
+											"<pre><code class=\"language-python\">" + // colspan states how many columns this entry may span.
+													escapedDataCode +  // XXX This probably doesn't unescape the code properly. But, it is a start.
+											  "</code></pre>") + "</td>";
+									
+							String row = "<tr class=\\\"none\\\">" + rowContent + "</tr>";
+							sb.append(row);
+							
+							if (lineno % PAGE_LENGTH == 0 && lineno > 0) {
+								page = page.concat(sb.toString());
+								page = page.concat(getNextAndPrev(pageList.size(), query_id, dataset_id));
+								pageList.add(page);
+//								logger.error(page);
+								page = new String(getPageCssAndJs());
+								sb = new StringBuilder();
+							}
+
+							line = bufferedReader.readLine();
+							lineno++;
+						}
+						bufferedReader.close();
+					}
+					else {
+						logger.error("Found unexpected folder in results directory.");
+					}
+				}
+			} else {
+				logger.error("The results directory doesn't seem to exist.");
+			}
+			//report = report.concat(sb.toString());
+			if (sb.length() > 0) {
+				page = page.concat(sb.toString());
+				page = page.concat(getNextAndPrev(pageList.size(), query_id, dataset_id));
+				pageList.add(page);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return pageList;
+	}
+	
+	
+
 	public void loadCodeCsvFileToMap(Path csvFile, HashMap<String, String> map) {
 		/**
 		 * This function is used to load the header and license file into maps.
@@ -469,8 +635,8 @@ public class Daemon {
 		try (BufferedReader br = Files.newBufferedReader(csvFile, StandardCharsets.UTF_8)) {
 			String line = br.readLine();
 			while (line != null) {
-				String prefixRemoved = line.replaceFirst("u'", "");
-				String suffixRemoved = prefixRemoved.replaceAll("\n'$", "");
+				String prefixRemoved = line.replaceFirst("u('|\")", "");
+				String suffixRemoved = prefixRemoved.substring(0, prefixRemoved.length()-3); // remove "\n'"
 				
 				String[] parts = suffixRemoved.split(",", 2);
 

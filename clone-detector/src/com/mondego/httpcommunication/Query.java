@@ -16,6 +16,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.Set;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
@@ -198,17 +199,27 @@ public class Query {
         /* get the query results and send them to the manager */
         // XXX uses output dir from SCC like SourcererCC/clone-detector/NODE_1/output8.0
         File resultsDir = daemon.getResults();
+        /*
         String report = daemon.generateReport(
         		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, SearchManager.QUERY_SRC_DIR,
         		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath, SearchManager.DATASET_SRC_DIR // TODO rename
         		);
+        */
+        // TODO List<String> reportPages = daemon.generateReportPages(String qId, String dId)?
+        ArrayList<String> reportPages = daemon.generateReportPages(
+        		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, SearchManager.QUERY_SRC_DIR,
+        		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath, SearchManager.DATASET_SRC_DIR, // TODO rename
+        		qid,
+        		daemon.dataset_id
+        		);
         
         
-        sendResults(report, qid, daemon.dataset_id);
+        sendResultPages(reportPages, qid, daemon.dataset_id);
 //            } finally {
             		Daemon.semaphore.release();
 //            }
 //            }});
+            		
 		
 		
 		return "Query running.";
@@ -356,5 +367,43 @@ public class Query {
 		Response response = webTarget
 				.request()
 				.post(Entity.entity(entity, MediaType.MULTIPART_FORM_DATA));
+	}
+	
+	void sendResultPages(ArrayList<String> reportPages, String queryId, String datasetShardId) {	
+		ClientConfig clientConfig = new ClientConfig();
+		clientConfig.register(MultiPartFeature.class); 
+		
+		Client client = ClientBuilder.newClient(clientConfig);
+		WebTarget webTarget = client.target("http://" + Daemon.managerIP + ":" + String.valueOf(Daemon.managerPort) + "/results");  // TODO dynamic
+
+		for (int pageno = 0; pageno < reportPages.size(); pageno++) {
+			String page = reportPages.get(pageno);
+			MultivaluedMap formData = new MultivaluedStringMap();
+			formData.add("report", page);
+			formData.add("queryId", queryId);
+			formData.add("page_no", String.valueOf(pageno));
+			formData.add("datasetShardId", datasetShardId);
+			formData.add("batch_name", SearchManager.batch_name);
+
+			FormDataContentDisposition cd = null;
+			try {
+				cd = new FormDataContentDisposition("form-data; name=\"meta_data\"");
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				System.out.println("A problem occurred.");
+				e.printStackTrace();
+			}
+
+			BodyPart formBody = new BodyPart().entity(formData);
+			formBody.setMediaType(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
+			formBody.setContentDisposition(cd);
+
+			MultiPart entity = new FormDataMultiPart()
+					.bodyPart(formBody);
+
+			Response response = webTarget
+					.request()
+					.post(Entity.entity(entity, MediaType.MULTIPART_FORM_DATA));
+		}
 	}
 }
