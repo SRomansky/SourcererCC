@@ -9,9 +9,13 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
@@ -77,7 +81,7 @@ public class Query {
 			@FormDataParam("license_file") InputStream licenseInputStream,
 			@FormDataParam("code_file") InputStream codeInputStream,
 			@FormDataParam("meta_data") FormDataBodyPart metaData,
-			@FormDataParam("batch_name") InputStream batchNameStream
+			@FormDataParam("input_name") InputStream batchNameStream
 			) {
 		/**
 		 * run a query on the client using files from the POST message
@@ -104,7 +108,7 @@ public class Query {
 		java.nio.file.Path tempFile = null;
 		String shash = "";
 		try {
-			tempFile = Files.createTempFile(uploadDir.toPath(), "", ".zip");
+			tempFile = Files.createTempFile(uploadDir.toPath(), "", ".tokens"); // this is no longer a zip file
 			Files.copy(uploadedInputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
 			
 	        shash = getFileHash(tempFile);
@@ -164,7 +168,10 @@ public class Query {
 			e1.printStackTrace();
 		}
 		try {
-			unzip(tempFile.toString(), daemon.sm.QUERY_DIR_PATH);
+			File storage = new File(daemon.sm.QUERY_DIR_PATH);
+			storage.mkdir();
+			Files.move(tempFile, Paths.get(daemon.sm.QUERY_DIR_PATH + "/tmp.tokens"), StandardCopyOption.REPLACE_EXISTING);
+//			unzip(tempFile.toString(), daemon.sm.QUERY_DIR_PATH); // no longer a zip file
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
