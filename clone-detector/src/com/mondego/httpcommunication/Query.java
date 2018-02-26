@@ -66,42 +66,15 @@ public class Query {
 		return shash;
 	}
 	
-	/**
-	 * accept a zip file of query data from whomever and run a
-	 * clone detection query with the data.
-	 * 
-	 * @param uploadedInputStream
-	 * @return
-	 */
-	@POST
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public String query(
-			@FormDataParam("query_file") InputStream uploadedInputStream,
-			@FormDataParam("query_src") InputStream querySrcInputStream,
-			@FormDataParam("header_file") InputStream headerInputStream,
-			@FormDataParam("license_file") InputStream licenseInputStream,
-			@FormDataParam("code_file") InputStream codeInputStream,
-			@FormDataParam("meta_data") FormDataBodyPart metaData,
-			@FormDataParam("input_name") InputStream batchNameStream
-			) {
-		/**
-		 * run a query on the client using files from the POST message
-		 * 
-		 * side-effect: delete everything in daemon.sm.QUERY_DIR_PATH
-		 * side-effect: puts new files into daemon.sm.QUERY_DIR_PATH
-		 */
-
-		try {
-            Daemon.semaphore.acquire();
-        } catch (InterruptedException ex) {
-            logger.error("Caught interrupted exception " + ex);
-        }
-		
-		// TODO check if the client is in the IDLE state
-		MultivaluedMap metaDataMap = metaData.getValueAs(MultivaluedMap.class);
-		String qid = (String) ((java.util.LinkedList) metaDataMap.get("qid")).get(0);  // why
-
-		
+	private String query(
+			InputStream uploadedInputStream, 
+			InputStream querySrcInputStream, 
+			InputStream headerInputStream, 
+			InputStream licenseInputStream,
+			InputStream codeInputStream, 
+			InputStream batchNameStream, 
+			InputStream taskNameStream, 
+			String qid) {
 		File uploadDir = new File("query_sets");  // TODO refactor into daemon
 		uploadDir.mkdir();
 		
@@ -111,13 +84,7 @@ public class Query {
 		try {
 			tempFile = Files.createTempFile(uploadDir.toPath(), "", ".tokens"); // this is no longer a zip file
 			Files.copy(uploadedInputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
-			
 	        shash = getFileHash(tempFile);
-
-//			java.nio.file.Path querySrcPath = Paths.get(SearchManager.QUERY_SRC_DIR);
-//			Files.deleteIfExists(querySrcPath);
-//			Files.createFile(querySrcPath);
-//			Files.copy(querySrcInputStream, querySrcPath);
 		} catch (IOException | NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -172,21 +139,10 @@ public class Query {
 			File storage = new File(daemon.sm.QUERY_DIR_PATH);
 			storage.mkdir();
 			Files.move(tempFile, Paths.get(daemon.sm.QUERY_DIR_PATH + "/tmp.tokens"), StandardCopyOption.REPLACE_EXISTING);
-//			unzip(tempFile.toString(), daemon.sm.QUERY_DIR_PATH); // no longer a zip file
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-//		TASK_EXECUTOR.submit(new Runnable() {
-//            @Override
-//            public void run() {
-		
-		/* run the query */
-		// TODO check if daemon status is loaded
-//		if (!theInstance.daemon_loaded) {
-//			return "daemon is still initializing.";
-//		}
-		
 		
 		// TODO wait until the daemon has started before running a query
 		long timeStartSearch = System.nanoTime();
@@ -199,13 +155,6 @@ public class Query {
         /* get the query results and send them to the manager */
         // XXX uses output dir from SCC like SourcererCC/clone-detector/NODE_1/output8.0
         File resultsDir = daemon.getResults();
-        /*
-        String report = daemon.generateReport(
-        		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, SearchManager.QUERY_SRC_DIR,
-        		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath, SearchManager.DATASET_SRC_DIR // TODO rename
-        		);
-        */
-        // TODO List<String> reportPages = daemon.generateReportPages(String qId, String dId)?
         ArrayList<String> reportPages = daemon.generateReportPages(
         		SearchManager.queryHeaderFilePath, SearchManager.queryLicenseFilePath, SearchManager.QUERY_SRC_DIR,
         		SearchManager.datasetHeaderFilePath, SearchManager.datasetLicenseFilePath, SearchManager.DATASET_SRC_DIR, // TODO rename
@@ -215,17 +164,143 @@ public class Query {
         
         
         sendResultPages(reportPages, qid, daemon.dataset_id);
-//            } finally {
-            		Daemon.semaphore.release();
-//            }
-//            }});
-            		
+		return "query complete";
+	}
+	
+	/**
+	 * accept a zip file of query data from whomever and run a
+	 * clone detection query with the data.
+	 * 
+	 * @param uploadedInputStream
+	 * @return
+	 */
+	@POST
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	public String taskrunner(
+			@FormDataParam("query_file") InputStream uploadedInputStream,
+			@FormDataParam("query_src") InputStream querySrcInputStream,
+			@FormDataParam("header_file") InputStream headerInputStream,
+			@FormDataParam("license_file") InputStream licenseInputStream,
+			@FormDataParam("code_file") InputStream codeInputStream,
+			@FormDataParam("meta_data") FormDataBodyPart metaData,
+			@FormDataParam("input_name") InputStream batchNameStream,
+			@FormDataParam("task") InputStream taskNameStream
+			) {
+		/**
+		 * run a query on the client using files from the POST message
+		 * 
+		 * side-effect: delete everything in daemon.sm.QUERY_DIR_PATH
+		 * side-effect: puts new files into daemon.sm.QUERY_DIR_PATH
+		 */
+
+		try {
+            Daemon.semaphore.acquire();
+        } catch (InterruptedException ex) {
+            logger.error("Caught interrupted exception " + ex);
+        }
+		
+		java.nio.file.Path taskNamePath = Paths.get("task.txt");
+		try {
+			Files.deleteIfExists(taskNamePath);
+			Files.createFile(taskNamePath);  // TODO check if file attributes are needed...
+			Files.copy(taskNameStream, taskNamePath, StandardCopyOption.REPLACE_EXISTING);
+			SearchManager.task = String.join(" ", Files.readAllLines(taskNamePath));
+		} catch (IOException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
 		
 		
+		// TODO check if the client is in the IDLE state
+		MultivaluedMap metaDataMap = metaData.getValueAs(MultivaluedMap.class);
+		String qid = (String) ((java.util.LinkedList) metaDataMap.get("qid")).get(0);  // why
+
+		// do the following if
+		if (SearchManager.task.equals(new String("query"))) //
+			query(uploadedInputStream, querySrcInputStream, headerInputStream, licenseInputStream,
+					codeInputStream, batchNameStream, taskNameStream, qid);
+		else if (SearchManager.task.equals(new String("shard")))
+			shard(uploadedInputStream, querySrcInputStream, headerInputStream, licenseInputStream,
+					codeInputStream, batchNameStream, taskNameStream, qid);
+		else
+			logger.error("unknown task given to client: " + SearchManager.task);
+		
+        Daemon.semaphore.release();
 		return "Query running.";
 	}
 	
 	
+	private void shard(InputStream uploadedInputStream, InputStream querySrcInputStream, InputStream headerInputStream,
+			InputStream licenseInputStream, InputStream codeInputStream, InputStream batchNameStream,
+			InputStream taskNameStream, String qid) {
+		
+		//SearchManager.DATASET_DIR // clean it out and replace the tokens file with the new shard data
+		File shardDir = new File("shard_sets");
+		shardDir.mkdir();
+		
+		/* read contents from manager */
+		java.nio.file.Path tempFile = null;
+		String shash = "";
+		try {
+			tempFile = Files.createTempFile(shardDir.toPath(), "", ".tokens"); // this is no longer a zip file
+			Files.copy(uploadedInputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+	        shash = getFileHash(tempFile);
+	        
+	        FileUtils.cleanDirectory(new File(SearchManager.DATASET_DIR));
+			File storage = new File(SearchManager.DATASET_DIR);
+			storage.mkdir();
+			Files.move(tempFile, Paths.get(SearchManager.DATASET_DIR + "/tmp.tokens"), StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException | NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println(shash);  // TODO log the hash? It could be useful for debugging?
+		System.out.println("Got shard id: " + qid);
+		
+		SearchManager.batch_name = null;
+		try {
+			System.out.println("Header path: " + SearchManager.datasetHeaderFilePath);
+			java.nio.file.Path dataHeaderPath = Paths.get(SearchManager.datasetHeaderFilePath);
+			Files.deleteIfExists(dataHeaderPath);
+			Files.createFile(dataHeaderPath);  // TODO check if file attributes are needed...
+			Files.copy(headerInputStream, dataHeaderPath, StandardCopyOption.REPLACE_EXISTING);
+			
+			java.nio.file.Path dataLicensePath = Paths.get(SearchManager.datasetLicenseFilePath);
+			Files.deleteIfExists(dataLicensePath);
+			Files.createFile(dataLicensePath);  // TODO check if file attributes are needed...
+			Files.copy(licenseInputStream, dataLicensePath, StandardCopyOption.REPLACE_EXISTING);
+			
+			java.nio.file.Path dataCodePath = Paths.get(SearchManager.DATASET_SRC_DIR);
+			Files.deleteIfExists(dataCodePath);
+			Files.createFile(dataCodePath);  // TODO check if file attributes are needed...
+			Files.copy(codeInputStream, dataCodePath, StandardCopyOption.REPLACE_EXISTING);
+			
+			java.nio.file.Path batchNamePath = Paths.get("batch_name.txt");
+			Files.deleteIfExists(batchNamePath);
+			Files.createFile(batchNamePath);  // TODO check if file attributes are needed...
+			Files.copy(batchNameStream, batchNamePath, StandardCopyOption.REPLACE_EXISTING);
+			
+			SearchManager.batch_name = String.join(" ", Files.readAllLines(batchNamePath)); //IOUtils.toString(batchNameStream);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		/* unpack contents from manager into query directory */
+		
+		
+		// TODO check if the daemon is busy in a query
+		// TODO if the daemon is busy there is a bug :)
+		// TODO (later) if the daemon is busy, send a POST with an error to results/{id} on the manager
+		
+		Daemon daemon = Daemon.getInstance();
+
+		
+		// TODO wait until the daemon has started before running a query
+		long timeStartSearch = System.nanoTime();
+		// Daemon.setState(running query);
+		daemon.start();
+	}
+
 	@Path("/local") // TODO figure out the path for this
 	@POST
 	public String queryLocalFiles() {
